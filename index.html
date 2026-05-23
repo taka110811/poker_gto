@@ -3,22 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Poker GTO Simulator</title>
+    <title>Poker GTO Solver Studio</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="app">
       <header class="topbar">
         <div>
-          <h1>Poker GTO Simulator</h1>
-          <p>Texas Hold'em decision trainer</p>
+          <h1>Poker GTO Solver Studio</h1>
+          <p>Heads-up strategy workspace</p>
         </div>
-        <button id="runSimulation" class="primary">Simulate</button>
+        <button id="runSimulation" class="primary">Solve Spot</button>
       </header>
+
+      <section class="solver-summary" aria-label="Solver configuration">
+        <div>
+          <span>Mode</span>
+          <strong>Approx EV</strong>
+        </div>
+        <div>
+          <span>Format</span>
+          <strong>Heads-up</strong>
+        </div>
+        <div>
+          <span>Objective</span>
+          <strong>Chip EV</strong>
+        </div>
+        <div>
+          <span>Rake</span>
+          <strong>None</strong>
+        </div>
+      </section>
 
       <section class="workspace">
         <aside class="panel controls" aria-label="Inputs">
-          <div class="section-title">Game State</div>
+          <div class="section-title">Solver Setup</div>
 
           <label class="field">
             <span>Hero position</span>
@@ -33,7 +52,7 @@
           </label>
 
           <label class="field">
-            <span>Opponent range</span>
+            <span>Villain range</span>
             <select id="villainRange">
               <option value="tight">Tight 18%</option>
               <option value="standard" selected>Standard 30%</option>
@@ -55,7 +74,7 @@
 
           <div class="grid-2">
             <label class="field">
-              <span>Stack</span>
+              <span>Effective stack</span>
               <input id="stack" type="number" min="1" value="85" />
             </label>
             <label class="field">
@@ -70,8 +89,8 @@
           <div class="section-title">Board</div>
           <div id="boardCards" class="card-row board"></div>
 
-          <button id="randomDeal" class="secondary">Random deal</button>
-          <button id="clearCards" class="ghost">Clear cards</button>
+          <button id="randomDeal" class="secondary">Random spot</button>
+          <button id="clearCards" class="ghost">Clear spot</button>
         </aside>
 
         <section class="panel table-area" aria-label="Poker table">
@@ -93,9 +112,9 @@
         </section>
 
         <aside class="panel results" aria-label="Results">
-          <div class="section-title">Decision</div>
+          <div class="section-title">Strategy Output</div>
           <div class="action-box">
-            <span id="actionLabel">Simulate to start</span>
+            <span id="actionLabel">Solve to start</span>
             <strong id="actionFrequency">--</strong>
           </div>
 
@@ -136,7 +155,7 @@
           </div>
 
           <p id="reasoning" class="reasoning">
-            入力を選んで Simulate を押してください。
+            入力を選んで Solve Spot を押してください。
           </p>
         </aside>
       </section>
@@ -144,8 +163,8 @@
       <section class="panel matrix-panel">
         <div class="matrix-head">
           <div>
-            <div class="section-title">Preflop Range Matrix</div>
-            <p>選択中レンジに含まれる手札を濃く表示します。</p>
+            <div class="section-title">Range Preview</div>
+            <p>Villain rangeに含まれるプリフロップハンドを濃く表示します。</p>
           </div>
           <span id="comboCount">0 combos</span>
         </div>

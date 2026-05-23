@@ -58,6 +58,34 @@ p {
   color: var(--muted);
 }
 
+.solver-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.solver-summary div {
+  display: grid;
+  gap: 4px;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.solver-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.solver-summary strong {
+  font-size: 18px;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: 320px minmax(420px, 1fr) 320px;
@@ -387,6 +415,10 @@ button {
   .matrix-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .solver-summary {
+    grid-template-columns: 1fr 1fr;
   }
 
   .primary {

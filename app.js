@@ -354,7 +354,7 @@ function renderDecision(equityValue, decision, sampleCount) {
     ["Call", decision.call],
     ["Fold", decision.fold],
   ].sort((a, b) => b[1] - a[1]);
-  els.actionLabel.textContent = "Recommended action";
+  els.actionLabel.textContent = "Highest frequency action";
   els.actionFrequency.textContent = `${entries[0][0]} ${pct(entries[0][1])}`;
   els.equity.textContent = pct(equityValue);
   els.potOdds.textContent = pct(decision.potOdds);
@@ -363,7 +363,7 @@ function renderDecision(equityValue, decision, sampleCount) {
   setBars(decision);
   setReason(
     `エクイティ ${pct(equityValue)}、必要勝率 ${pct(decision.potOdds)}。` +
-      ` ポジションとSPRを補正した近似値では ${entries[0][0]} の頻度が最も高いです。`
+      ` ポジションとSPRを補正したChip EV近似では ${entries[0][0]} の頻度が最も高いです。`
   );
 }
 
