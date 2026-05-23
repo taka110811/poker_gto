@@ -31,5 +31,7 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.locator("#ipCallFreq")).not.toHaveText("--");
   await expect(page.locator("#sizeResults")).toContainText("33% pot");
   await expect(page.locator("#sizeResults")).toContainText("125% pot");
+  await page.getByRole("button", { name: "Solve Spot" }).click();
+  await expect(page.locator("#riverStatus")).toContainText("cached");
   expect(pageErrors).toEqual([]);
 });
