@@ -91,6 +91,7 @@ const els = {
   precomputedRecord: document.querySelector("#precomputedRecord"),
   precomputedSpot: document.querySelector("#precomputedSpot"),
   precomputedSolver: document.querySelector("#precomputedSolver"),
+  precomputedDbStats: document.querySelector("#precomputedDbStats"),
   precomputedActions: document.querySelector("#precomputedActions"),
   precomputedActionRows: document.querySelector("#precomputedActionRows"),
 };
@@ -554,15 +555,24 @@ async function loadPrecomputedSpots() {
 function createSqlitePrecomputedStore(sourceUrl) {
   let loaded = false;
   let db = null;
+  let stats = {
+    loadMs: 0,
+    sizeKb: 0,
+    spotCount: 0,
+  };
 
   return {
     get loaded() {
       return loaded;
     },
+    get stats() {
+      return stats;
+    },
     async load() {
       if (loaded) return;
       if (!window.initSqlJs) throw new Error("sql.js runtime unavailable");
 
+      const start = performance.now();
       const SQL = await window.initSqlJs({
         locateFile: (file) => `./vendor/sql.js/${file}`,
       });
@@ -570,6 +580,11 @@ function createSqlitePrecomputedStore(sourceUrl) {
       if (!response.ok) throw new Error(`Reference DB HTTP ${response.status}`);
       const bytes = new Uint8Array(await response.arrayBuffer());
       db = new SQL.Database(bytes);
+      stats = {
+        loadMs: Math.round(performance.now() - start),
+        sizeKb: Math.round(bytes.byteLength / 1024),
+        spotCount: selectPrecomputedSpotCount(db),
+      };
       loaded = true;
     },
     find(query) {
@@ -585,6 +600,11 @@ function createSqlitePrecomputedStore(sourceUrl) {
       return { exact: reasons.length === 0, reasons, spot: best };
     },
   };
+}
+
+function selectPrecomputedSpotCount(db) {
+  const result = db.exec("SELECT COUNT(*) AS count FROM spots");
+  return result[0]?.values[0]?.[0] || 0;
 }
 
 function selectPrecomputedSpots(db) {
@@ -635,6 +655,7 @@ function resetPrecomputedReference(status) {
   els.precomputedRecord.textContent = "--";
   els.precomputedSpot.textContent = "--";
   els.precomputedSolver.textContent = "--";
+  els.precomputedDbStats.textContent = "--";
   els.precomputedActions.textContent = "--";
   renderPrecomputedActionRows([]);
 }
@@ -663,6 +684,8 @@ function renderPrecomputedReference(board) {
     `${spot.positions} / ${spot.pot_type} / ${spot.effective_stack_bb}bb / ` +
     `${spot.pot_bb}bb pot / ${spot.bet_tree_key} / ${spot.board_class}`;
   els.precomputedSolver.textContent = `${spot.solver_name} ${spot.solver_version}`;
+  els.precomputedDbStats.textContent =
+    `${precomputedStore.stats.spotCount} spots / ${precomputedStore.stats.sizeKb} KB / ${precomputedStore.stats.loadMs} ms`;
   els.precomputedActions.textContent = spot.actions
     .slice(0, 3)
     .map((action) => `${action.hand_code} ${action.action} ${pct(action.frequency)}`)

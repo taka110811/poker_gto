@@ -51,6 +51,8 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#precomputedSpot")).not.toHaveText("--");
   await expect(page.locator("#precomputedSpot")).toContainText("river-no-raise-33-75");
   await expect(page.locator("#precomputedSolver")).toContainText("sample-precompute");
+  await expect(page.locator("#precomputedDbStats")).toContainText("5 spots");
+  await expect(page.locator("#precomputedDbStats")).toContainText("KB");
   await expect(page.locator("#precomputedActions")).toContainText("%");
   await expect(page.locator("#precomputedActionRows tr")).toHaveCount(3);
   await expect(page.locator("#precomputedActionRows")).toContainText("Bet");
@@ -74,6 +76,7 @@ test("shows exact precomputed reference for seeded river board", async ({ page }
   await expect(page.locator("#precomputedStatus")).toHaveText("Exact precomputed spot");
   await expect(page.locator("#precomputedRecord")).toHaveText("btn-bb-srp-river-ahigh-dry-100bb");
   await expect(page.locator("#precomputedSolver")).toContainText("2026-05-foundation");
+  await expect(page.locator("#precomputedDbStats")).toContainText("5 spots");
   await expect(page.locator("#precomputedActionRows tr")).toHaveCount(3);
   expect(pageErrors).toEqual([]);
 });
