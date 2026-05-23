@@ -25,6 +25,12 @@ jobs:
       - name: Check JavaScript syntax
         run: npm run check
 
+      - name: Generate precomputed DB
+        run: npm run db:generate
+
+      - name: Test precomputed DB query
+        run: npm run test:db
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
