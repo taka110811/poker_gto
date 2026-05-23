@@ -28,6 +28,9 @@ jobs:
       - name: Generate precomputed DB
         run: npm run db:generate
 
+      - name: Validate precomputed DB artifacts
+        run: npm run db:validate
+
       - name: Test precomputed DB query
         run: npm run test:db
 
