@@ -388,6 +388,35 @@ button {
   line-height: 1.4;
 }
 
+.reference-table-wrap {
+  overflow-x: auto;
+}
+
+.reference-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.reference-table th,
+.reference-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.reference-table th {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.reference-table th:nth-child(n + 3),
+.reference-table td:nth-child(n + 3) {
+  text-align: right;
+}
+
 .matrix-panel {
   margin-top: 16px;
   padding: 16px;
