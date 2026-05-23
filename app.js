@@ -148,6 +148,30 @@ function boardClass(board) {
   return `${highRank}-high ${suitPattern} ${texture}`;
 }
 
+function currentBetTreeKey() {
+  const keys = [...betTreeState.activeSizes]
+    .map((size) => (size === "allin" ? "allin" : String(Math.round(Number(size) * 100))))
+    .sort((a, b) => {
+      if (a === "allin") return 1;
+      if (b === "allin") return -1;
+      return Number(a) - Number(b);
+    });
+  return `river-no-raise-${keys.join("-")}`;
+}
+
+function currentPrecomputedQuery(board) {
+  return {
+    board,
+    board_class: boardClass(board),
+    bet_tree_key: currentBetTreeKey(),
+    effective_stack_bb: Number(els.stack.value || 0),
+    positions: `${els.position.value} vs BB`,
+    pot_bb: Number(els.pot.value || 0),
+    pot_type: "SRP",
+    street: "river",
+  };
+}
+
 function selectedCards() {
   const hero = [...els.heroCards.querySelectorAll("select")].map((select) => select.value);
   const board = [...els.boardCards.querySelectorAll("select")].map((select) => select.value);
@@ -549,7 +573,7 @@ function renderPrecomputedReference(board) {
     return;
   }
 
-  const match = findPrecomputedSpot(board);
+  const match = findPrecomputedSpot(currentPrecomputedQuery(board));
   if (!match) {
     els.precomputedStatus.textContent = "No solved spot available";
     els.precomputedSpot.textContent = "--";
@@ -558,26 +582,53 @@ function renderPrecomputedReference(board) {
   }
 
   const spot = match.spot;
-  els.precomputedStatus.textContent = match.exact ? "Exact precomputed spot" : `Approx: ${match.reason}`;
-  els.precomputedSpot.textContent = `${spot.positions} / ${spot.pot_type} / ${spot.board_class}`;
+  els.precomputedStatus.textContent = match.exact ? "Exact precomputed spot" : `Approx: ${match.reasons.join("; ")}`;
+  els.precomputedSpot.textContent =
+    `${spot.positions} / ${spot.pot_type} / ${spot.effective_stack_bb}bb / ` +
+    `${spot.pot_bb}bb pot / ${spot.bet_tree_key} / ${spot.board_class}`;
   els.precomputedActions.textContent = spot.actions
     .slice(0, 3)
     .map((action) => `${action.hand_code} ${action.action} ${pct(action.frequency)}`)
     .join(" / ");
 }
 
-function findPrecomputedSpot(board) {
-  const exactKey = boardKey(board);
-  const exact = precomputedState.spots.find((spot) => boardKey(spot.board) === exactKey);
-  if (exact) return { exact: true, spot: exact };
+function findPrecomputedSpot(query) {
+  const ranked = precomputedState.spots
+    .map((spot) => ({ spot, score: precomputedMatchScore(query, spot) }))
+    .sort((a, b) => b.score - a.score);
+  const best = ranked[0]?.spot;
+  if (!best) return null;
 
-  const targetClass = boardClass(board);
-  const sameClass = precomputedState.spots.find((spot) => spot.board_class === targetClass);
-  if (sameClass) return { exact: false, reason: `board class rounded to ${targetClass}`, spot: sameClass };
+  const reasons = precomputedMatchReasons(query, best);
+  return { exact: reasons.length === 0, reasons, spot: best };
+}
 
-  const fallback = precomputedState.spots[0];
-  if (!fallback) return null;
-  return { exact: false, reason: `board class rounded to ${fallback.board_class}`, spot: fallback };
+function precomputedMatchScore(query, spot) {
+  let score = 0;
+  if (spot.street === query.street) score += 40;
+  if (spot.positions === query.positions) score += 30;
+  if (spot.pot_type === query.pot_type) score += 20;
+  if (spot.bet_tree_key === query.bet_tree_key) score += 15;
+  if (boardKey(spot.board) === boardKey(query.board)) score += 100;
+  else if (spot.board_class === query.board_class) score += 45;
+  score -= Math.abs(spot.effective_stack_bb - query.effective_stack_bb) * 0.25;
+  score -= Math.abs(spot.pot_bb - query.pot_bb) * 0.5;
+  return score;
+}
+
+function precomputedMatchReasons(query, spot) {
+  const reasons = [];
+  if (spot.positions !== query.positions) reasons.push(`positions rounded to ${spot.positions}`);
+  if (spot.pot_type !== query.pot_type) reasons.push(`pot type rounded to ${spot.pot_type}`);
+  if (spot.effective_stack_bb !== query.effective_stack_bb) {
+    reasons.push(`stack rounded ${query.effective_stack_bb}bb -> ${spot.effective_stack_bb}bb`);
+  }
+  if (spot.board_class !== query.board_class || boardKey(spot.board) !== boardKey(query.board)) {
+    reasons.push(`board rounded to ${spot.board_class}`);
+  }
+  if (spot.bet_tree_key !== query.bet_tree_key) reasons.push(`bet tree rounded to ${spot.bet_tree_key}`);
+  if (spot.pot_bb !== query.pot_bb) reasons.push(`pot rounded ${query.pot_bb}bb -> ${spot.pot_bb}bb`);
+  return reasons;
 }
 
 function renderRiverSolver(board) {
