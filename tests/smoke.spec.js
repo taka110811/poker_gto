@@ -11,8 +11,11 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
 
   await expect(page).toHaveTitle("Poker GTO Solver Studio");
   await expect(page.getByRole("heading", { name: "Poker GTO Solver Studio" })).toBeVisible();
-  await expect(page.getByText("Approx EV")).toBeVisible();
+  await expect(page.getByLabel("Solver configuration").getByText("Approx EV")).toBeVisible();
   await expect(page.getByText("Chip EV")).toBeVisible();
+  await expect(page.locator(".source-badge", { hasText: "Approx EV" })).toBeVisible();
+  await expect(page.locator(".source-badge", { hasText: "Live CFR" })).toBeVisible();
+  await expect(page.locator(".source-badge", { hasText: "Precomputed DB" })).toBeVisible();
   await expect(page.getByText("Solved Spot Reference")).toBeVisible();
   await expect(page.getByRole("button", { name: "OOP Range" })).toBeVisible();
   await expect(page.getByRole("button", { name: "IP Range" })).toBeVisible();

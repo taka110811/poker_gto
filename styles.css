@@ -112,6 +112,45 @@ p {
   text-transform: uppercase;
 }
 
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.section-heading .section-title {
+  margin: 0;
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid rgba(90, 169, 230, 0.5);
+  border-radius: 999px;
+  color: #c9e4f8;
+  background: rgba(90, 169, 230, 0.12);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.source-badge.live {
+  border-color: rgba(43, 191, 132, 0.45);
+  color: #c7f2df;
+  background: rgba(43, 191, 132, 0.12);
+}
+
+.source-badge.db {
+  border-color: rgba(240, 184, 76, 0.5);
+  color: #f9e5b8;
+  background: rgba(240, 184, 76, 0.12);
+}
+
 .field {
   display: grid;
   gap: 6px;
