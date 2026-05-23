@@ -91,7 +91,9 @@ const els = {
   randomDeal: document.querySelector("#randomDeal"),
   clearCards: document.querySelector("#clearCards"),
   precomputedStatus: document.querySelector("#precomputedStatus"),
+  precomputedRecord: document.querySelector("#precomputedRecord"),
   precomputedSpot: document.querySelector("#precomputedSpot"),
+  precomputedSolver: document.querySelector("#precomputedSolver"),
   precomputedActions: document.querySelector("#precomputedActions"),
   precomputedActionRows: document.querySelector("#precomputedActionRows"),
 };
@@ -552,45 +554,44 @@ async function loadPrecomputedSpots() {
     renderPrecomputedReference(selectedCards().board.filter(Boolean));
   } catch (error) {
     precomputedState.loaded = false;
-    els.precomputedStatus.textContent = "Reference DB unavailable";
-    els.precomputedSpot.textContent = "--";
-    els.precomputedActions.textContent = "--";
-    renderPrecomputedActionRows([]);
+    resetPrecomputedReference("Reference DB unavailable");
     console.warn(error);
   }
 }
 
+function resetPrecomputedReference(status) {
+  els.precomputedStatus.textContent = status;
+  els.precomputedRecord.textContent = "--";
+  els.precomputedSpot.textContent = "--";
+  els.precomputedSolver.textContent = "--";
+  els.precomputedActions.textContent = "--";
+  renderPrecomputedActionRows([]);
+}
+
 function renderPrecomputedReference(board) {
   if (!precomputedState.loaded) {
-    els.precomputedStatus.textContent = "Loading reference DB";
-    els.precomputedSpot.textContent = "--";
-    els.precomputedActions.textContent = "--";
-    renderPrecomputedActionRows([]);
+    resetPrecomputedReference("Loading reference DB");
     return;
   }
 
   if (board.length !== 5) {
-    els.precomputedStatus.textContent = "Board 5枚で参照";
-    els.precomputedSpot.textContent = "--";
-    els.precomputedActions.textContent = "--";
-    renderPrecomputedActionRows([]);
+    resetPrecomputedReference("Board 5枚で参照");
     return;
   }
 
   const match = findPrecomputedSpot(currentPrecomputedQuery(board));
   if (!match) {
-    els.precomputedStatus.textContent = "No solved spot available";
-    els.precomputedSpot.textContent = "--";
-    els.precomputedActions.textContent = "--";
-    renderPrecomputedActionRows([]);
+    resetPrecomputedReference("No solved spot available");
     return;
   }
 
   const spot = match.spot;
   els.precomputedStatus.textContent = match.exact ? "Exact precomputed spot" : `Approx: ${match.reasons.join("; ")}`;
+  els.precomputedRecord.textContent = spot.id;
   els.precomputedSpot.textContent =
     `${spot.positions} / ${spot.pot_type} / ${spot.effective_stack_bb}bb / ` +
     `${spot.pot_bb}bb pot / ${spot.bet_tree_key} / ${spot.board_class}`;
+  els.precomputedSolver.textContent = `${spot.solver_name} ${spot.solver_version}`;
   els.precomputedActions.textContent = spot.actions
     .slice(0, 3)
     .map((action) => `${action.hand_code} ${action.action} ${pct(action.frequency)}`)
