@@ -9,7 +9,7 @@ function collectPageErrors(page) {
   return pageErrors;
 }
 
-test("loads solver workspace and solves a random spot", async ({ page }) => {
+test("loads solver workspace and solves a deterministic approximate spot", async ({ page }) => {
   const pageErrors = collectPageErrors(page);
 
   await page.goto("/?testMode=1");
@@ -31,7 +31,13 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.getByRole("button", { name: "75% pot" })).toBeVisible();
   await page.getByRole("button", { name: "125% pot" }).click();
 
-  await page.getByRole("button", { name: "Random spot" }).click();
+  await page.locator("#hero-0").selectOption("Kh");
+  await page.locator("#hero-1").selectOption("Qd");
+  await page.locator("#board-0").selectOption("Ah");
+  await page.locator("#board-1").selectOption("8d");
+  await page.locator("#board-2").selectOption("4c");
+  await page.locator("#board-3").selectOption("2h");
+  await page.locator("#board-4").selectOption("7s");
   await page.getByRole("button", { name: "Solve Spot" }).click();
 
   await expect(page.locator("#equity")).not.toHaveText("--", { timeout: 10000 });

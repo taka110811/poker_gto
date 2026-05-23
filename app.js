@@ -40,10 +40,7 @@ const solverSettings = {
 const solverCache = new Map();
 const pendingRiverSolves = new Map();
 const riverWorker = createRiverWorker();
-const precomputedState = {
-  loaded: false,
-  spots: [],
-};
+const precomputedStore = createJsonPrecomputedStore("./data/precomputed_spots.json");
 let riverRequestId = 0;
 
 const els = {
@@ -546,17 +543,40 @@ function setReason(message) {
 
 async function loadPrecomputedSpots() {
   try {
-    const response = await fetch("./data/precomputed_spots.json");
-    if (!response.ok) throw new Error(`Reference DB HTTP ${response.status}`);
-    const data = await response.json();
-    precomputedState.loaded = true;
-    precomputedState.spots = data.spots || [];
+    await precomputedStore.load();
     renderPrecomputedReference(selectedCards().board.filter(Boolean));
   } catch (error) {
-    precomputedState.loaded = false;
     resetPrecomputedReference("Reference DB unavailable");
     console.warn(error);
   }
+}
+
+function createJsonPrecomputedStore(sourceUrl) {
+  let loaded = false;
+  let spots = [];
+
+  return {
+    get loaded() {
+      return loaded;
+    },
+    async load() {
+      const response = await fetch(sourceUrl);
+      if (!response.ok) throw new Error(`Reference DB HTTP ${response.status}`);
+      const data = await response.json();
+      spots = data.spots || [];
+      loaded = true;
+    },
+    find(query) {
+      const ranked = spots
+        .map((spot) => ({ spot, score: precomputedMatchScore(query, spot) }))
+        .sort((a, b) => b.score - a.score);
+      const best = ranked[0]?.spot;
+      if (!best) return null;
+
+      const reasons = precomputedMatchReasons(query, best);
+      return { exact: reasons.length === 0, reasons, spot: best };
+    },
+  };
 }
 
 function resetPrecomputedReference(status) {
@@ -569,7 +589,7 @@ function resetPrecomputedReference(status) {
 }
 
 function renderPrecomputedReference(board) {
-  if (!precomputedState.loaded) {
+  if (!precomputedStore.loaded) {
     resetPrecomputedReference("Loading reference DB");
     return;
   }
@@ -579,7 +599,7 @@ function renderPrecomputedReference(board) {
     return;
   }
 
-  const match = findPrecomputedSpot(currentPrecomputedQuery(board));
+  const match = precomputedStore.find(currentPrecomputedQuery(board));
   if (!match) {
     resetPrecomputedReference("No solved spot available");
     return;
@@ -612,17 +632,6 @@ function renderPrecomputedActionRows(actions) {
     `;
     els.precomputedActionRows.appendChild(row);
   });
-}
-
-function findPrecomputedSpot(query) {
-  const ranked = precomputedState.spots
-    .map((spot) => ({ spot, score: precomputedMatchScore(query, spot) }))
-    .sort((a, b) => b.score - a.score);
-  const best = ranked[0]?.spot;
-  if (!best) return null;
-
-  const reasons = precomputedMatchReasons(query, best);
-  return { exact: reasons.length === 0, reasons, spot: best };
 }
 
 function precomputedMatchScore(query, spot) {
