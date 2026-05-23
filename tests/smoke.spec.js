@@ -36,7 +36,9 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.locator("#sizeResults")).toContainText("33% pot");
   await expect(page.locator("#sizeResults")).toContainText("125% pot");
   await expect(page.locator("#precomputedStatus")).toContainText("Approx");
+  await expect(page.locator("#precomputedRecord")).toContainText("btn-bb-srp-river");
   await expect(page.locator("#precomputedSpot")).not.toHaveText("--");
+  await expect(page.locator("#precomputedSolver")).toContainText("sample-precompute");
   await expect(page.locator("#precomputedActions")).toContainText("%");
   await expect(page.locator("#precomputedActionRows tr")).toHaveCount(3);
   await expect(page.locator("#precomputedActionRows")).toContainText("Bet");
