@@ -32,6 +32,30 @@ class QueryPrecomputedDbTest(unittest.TestCase):
         self.assertEqual(match["id"], "btn-bb-srp-river-ahigh-dry-100bb")
         self.assertEqual(query_db.match_reasons(query, match), [])
 
+    def test_dataset_contains_expanded_board_classes(self):
+        classes = {spot["board_class"] for spot in self.spots}
+
+        self.assertEqual(len(self.spots), 5)
+        self.assertIn("A-high monotone dry", classes)
+        self.assertIn("8-high rainbow connected", classes)
+
+    def test_exact_monotone_board_match(self):
+        query = {
+            "board": ["As", "Js", "8s", "4s", "2s"],
+            "board_class": query_db.board_class(["As", "Js", "8s", "4s", "2s"]),
+            "bet_tree_key": "river-no-raise-33-75",
+            "effective_stack_bb": 100,
+            "positions": "BTN vs BB",
+            "pot_bb": 12,
+            "pot_type": "SRP",
+            "street": "river",
+        }
+
+        match = self.best_match(query)
+
+        self.assertEqual(match["id"], "btn-bb-srp-river-monotone-100bb")
+        self.assertEqual(query_db.match_reasons(query, match), [])
+
     def test_approximate_match_reports_rounding_reasons(self):
         query = {
             "board": ["Ah", "8d", "4c", "2h", "7s"],
