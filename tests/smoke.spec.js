@@ -13,6 +13,7 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Poker GTO Solver Studio" })).toBeVisible();
   await expect(page.getByText("Approx EV")).toBeVisible();
   await expect(page.getByText("Chip EV")).toBeVisible();
+  await expect(page.getByText("Solved Spot Reference")).toBeVisible();
   await expect(page.getByRole("button", { name: "OOP Range" })).toBeVisible();
   await expect(page.getByRole("button", { name: "IP Range" })).toBeVisible();
 
@@ -31,6 +32,8 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.locator("#ipCallFreq")).not.toHaveText("--");
   await expect(page.locator("#sizeResults")).toContainText("33% pot");
   await expect(page.locator("#sizeResults")).toContainText("125% pot");
+  await expect(page.locator("#precomputedSpot")).not.toHaveText("--");
+  await expect(page.locator("#precomputedActions")).toContainText("%");
   await page.getByRole("button", { name: "Solve Spot" }).click();
   await expect(page.locator("#riverStatus")).toContainText("cached");
   expect(pageErrors).toEqual([]);
