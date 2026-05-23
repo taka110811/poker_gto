@@ -19,9 +19,15 @@ const solverCache = new Map();
 
 self.onmessage = (event) => {
   const { id, payload, type } = event.data || {};
-  if (type !== "solve-river") return;
 
   try {
+    if (type === "solve-turn") {
+      self.postMessage({ id, ...solveTurnRunouts(payload), type: "turn-result" });
+      return;
+    }
+
+    if (type !== "solve-river") return;
+
     let cacheHits = 0;
     const results = payload.candidates
       .map((candidate) => {
@@ -45,6 +51,44 @@ self.onmessage = (event) => {
     self.postMessage({ id, message: error.message || String(error), type: "river-error" });
   }
 };
+
+function solveTurnRunouts(payload) {
+  let cacheHits = 0;
+  const runouts = turnRunoutCards(payload.deadCards, payload.runoutLimit);
+  const results = [];
+
+  runouts.forEach((riverCard) => {
+    const riverBoard = payload.board.concat(riverCard);
+    const best = payload.candidates
+      .map((candidate) => {
+        const solved = solveRiverSpotCached({
+          betSize: candidate.amount,
+          board: riverBoard,
+          ipRange: payload.ipRange,
+          iterations: payload.iterations,
+          oopRange: payload.oopRange,
+          pot: payload.pot,
+          comboLimit: payload.comboLimit,
+          version: payload.version,
+        });
+        if (solved.cacheHit) cacheHits += 1;
+        return { ...candidate, result: solved.result };
+      })
+      .filter((candidate) => candidate.result)
+      .sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
+
+    if (best) results.push({ riverCard, result: best.result });
+  });
+
+  return { results, cacheHits, runoutCount: runouts.length };
+}
+
+function turnRunoutCards(deadCards, limit) {
+  const blocked = new Set((deadCards || []).filter(Boolean));
+  return deck()
+    .filter((card) => !blocked.has(card))
+    .slice(0, limit);
+}
 
 function solveRiverSpotCached(input) {
   const key = solverCacheKey(input);
