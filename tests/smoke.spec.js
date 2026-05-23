@@ -7,7 +7,7 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
     if (message.type() === "error") pageErrors.push(message.text());
   });
 
-  await page.goto("/");
+  await page.goto("/?testMode=1");
 
   await expect(page).toHaveTitle("Poker GTO Solver Studio");
   await expect(page.getByRole("heading", { name: "Poker GTO Solver Studio" })).toBeVisible();

@@ -551,7 +551,7 @@ function solveRiverSpot({ board, pot, betSize }) {
   if (!pairs.length || pot <= 0 || betSize <= 0) return null;
 
   const infosets = new Map();
-  const iterations = 30;
+  const iterations = solverIterations();
   for (let i = 0; i < iterations; i += 1) {
     pairs.forEach(({ oop, ip, weight }) => {
       riverCfr("", oop, ip, board, pot, betSize, infosets, weight, weight);
@@ -572,6 +572,10 @@ function solveRiverSpot({ board, pot, betSize }) {
     oopCombos: oopCombos.length,
     ipCombos: ipCombos.length,
   };
+}
+
+function solverIterations() {
+  return new URLSearchParams(window.location.search).get("testMode") === "1" ? 6 : 30;
 }
 
 function rangeCombos(range, board) {
