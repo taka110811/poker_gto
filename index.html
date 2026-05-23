@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Poker GTO Simulator</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <h1>Poker GTO Simulator</h1>
+          <p>Texas Hold'em decision trainer</p>
+        </div>
+        <button id="runSimulation" class="primary">Simulate</button>
+      </header>
+
+      <section class="workspace">
+        <aside class="panel controls" aria-label="Inputs">
+          <div class="section-title">Game State</div>
+
+          <label class="field">
+            <span>Hero position</span>
+            <select id="position">
+              <option value="BTN">BTN</option>
+              <option value="CO">CO</option>
+              <option value="HJ">HJ</option>
+              <option value="UTG">UTG</option>
+              <option value="BB">BB</option>
+              <option value="SB">SB</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Opponent range</span>
+            <select id="villainRange">
+              <option value="tight">Tight 18%</option>
+              <option value="standard" selected>Standard 30%</option>
+              <option value="wide">Wide 45%</option>
+              <option value="any">Any two</option>
+            </select>
+          </label>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>Pot</span>
+              <input id="pot" type="number" min="1" value="12" />
+            </label>
+            <label class="field">
+              <span>To call</span>
+              <input id="toCall" type="number" min="0" value="4" />
+            </label>
+          </div>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>Stack</span>
+              <input id="stack" type="number" min="1" value="85" />
+            </label>
+            <label class="field">
+              <span>Bet size</span>
+              <input id="betSize" type="number" min="1" value="8" />
+            </label>
+          </div>
+
+          <div class="section-title">Hero Cards</div>
+          <div id="heroCards" class="card-row"></div>
+
+          <div class="section-title">Board</div>
+          <div id="boardCards" class="card-row board"></div>
+
+          <button id="randomDeal" class="secondary">Random deal</button>
+          <button id="clearCards" class="ghost">Clear cards</button>
+        </aside>
+
+        <section class="panel table-area" aria-label="Poker table">
+          <div class="felt">
+            <div class="seat villain">
+              <span>Villain</span>
+              <strong id="rangeLabel">Standard 30%</strong>
+            </div>
+            <div class="board-zone">
+              <div class="mini-label">Board</div>
+              <div id="boardDisplay" class="display-cards"></div>
+            </div>
+            <div class="pot">Pot <strong id="potDisplay">12</strong></div>
+            <div class="seat hero">
+              <span>Hero</span>
+              <div id="heroDisplay" class="display-cards"></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel results" aria-label="Results">
+          <div class="section-title">Decision</div>
+          <div class="action-box">
+            <span id="actionLabel">Simulate to start</span>
+            <strong id="actionFrequency">--</strong>
+          </div>
+
+          <div class="metric">
+            <span>Equity</span>
+            <strong id="equity">--</strong>
+          </div>
+          <div class="metric">
+            <span>Pot odds</span>
+            <strong id="potOdds">--</strong>
+          </div>
+          <div class="metric">
+            <span>SPR</span>
+            <strong id="spr">--</strong>
+          </div>
+          <div class="metric">
+            <span>Samples</span>
+            <strong id="samples">--</strong>
+          </div>
+
+          <div class="section-title">Strategy Mix</div>
+          <div class="bars">
+            <div>
+              <span>Raise</span>
+              <div class="bar"><i id="raiseBar"></i></div>
+              <b id="raisePct">0%</b>
+            </div>
+            <div>
+              <span>Call</span>
+              <div class="bar"><i id="callBar"></i></div>
+              <b id="callPct">0%</b>
+            </div>
+            <div>
+              <span>Fold</span>
+              <div class="bar"><i id="foldBar"></i></div>
+              <b id="foldPct">0%</b>
+            </div>
+          </div>
+
+          <p id="reasoning" class="reasoning">
+            入力を選んで Simulate を押してください。
+          </p>
+        </aside>
+      </section>
+
+      <section class="panel matrix-panel">
+        <div class="matrix-head">
+          <div>
+            <div class="section-title">Preflop Range Matrix</div>
+            <p>選択中レンジに含まれる手札を濃く表示します。</p>
+          </div>
+          <span id="comboCount">0 combos</span>
+        </div>
+        <div id="rangeMatrix" class="range-matrix"></div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

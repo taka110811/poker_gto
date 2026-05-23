@@ -1,0 +1,423 @@
+:root {
+  color-scheme: dark;
+  --bg: #111417;
+  --panel: #1b2025;
+  --panel-2: #242a30;
+  --line: #363f47;
+  --text: #f2f5f7;
+  --muted: #a8b1ba;
+  --green: #1f8f66;
+  --green-2: #2bbf84;
+  --red: #d95a4e;
+  --amber: #f0b84c;
+  --blue: #5aa9e6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app {
+  width: min(1440px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 320px minmax(420px, 1fr) 320px;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.controls,
+.results {
+  padding: 16px;
+}
+
+.section-title {
+  margin: 4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.field span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #11161a;
+  color: var(--text);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+button {
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.primary {
+  min-width: 140px;
+  background: var(--green-2);
+  color: #07120d;
+  font-weight: 800;
+}
+
+.secondary,
+.ghost {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.secondary {
+  background: var(--panel-2);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.card-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.card-row.board {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.card-select {
+  min-width: 0;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.table-area {
+  min-height: 560px;
+  padding: 16px;
+}
+
+.felt {
+  position: relative;
+  height: 100%;
+  min-height: 528px;
+  overflow: hidden;
+  border: 10px solid #66452d;
+  border-radius: 48%;
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 42%),
+    #116344;
+}
+
+.seat,
+.pot,
+.board-zone {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.seat {
+  display: grid;
+  place-items: center;
+  min-width: 180px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(9, 16, 18, 0.72);
+}
+
+.seat span,
+.mini-label {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+.villain {
+  top: 34px;
+}
+
+.hero {
+  bottom: 34px;
+}
+
+.board-zone {
+  top: 43%;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(520px, 82%);
+}
+
+.pot {
+  top: 58%;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(9, 16, 18, 0.82);
+}
+
+.display-cards {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  min-height: 72px;
+  flex-wrap: wrap;
+}
+
+.playing-card {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 72px;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #101316;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.playing-card.red {
+  color: #c9352b;
+}
+
+.action-box {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.action-box span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.action-box strong {
+  font-size: 28px;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.metric span {
+  color: var(--muted);
+}
+
+.bars {
+  display: grid;
+  gap: 10px;
+}
+
+.bars > div {
+  display: grid;
+  grid-template-columns: 48px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.bar {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #11161a;
+}
+
+.bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green-2);
+}
+
+#callBar {
+  background: var(--blue);
+}
+
+#foldBar {
+  background: var(--red);
+}
+
+.reasoning {
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+.matrix-panel {
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.matrix-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.matrix-head p {
+  font-size: 13px;
+}
+
+.range-matrix {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(34px, 1fr));
+  gap: 4px;
+}
+
+.range-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #12181c;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.range-cell.in-range {
+  background: color-mix(in srgb, var(--green) 62%, #12181c);
+  color: var(--text);
+}
+
+.range-cell.hero-hand {
+  outline: 2px solid var(--amber);
+  outline-offset: -2px;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .table-area {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .app {
+    width: min(100vw - 20px, 720px);
+    padding: 12px 0;
+  }
+
+  .topbar,
+  .matrix-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primary {
+    width: 100%;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .table-area {
+    min-height: 420px;
+  }
+
+  .felt {
+    min-height: 388px;
+    border-radius: 28%;
+  }
+
+  .playing-card {
+    width: 42px;
+    height: 58px;
+    font-size: 14px;
+  }
+
+  .range-matrix {
+    grid-template-columns: repeat(13, minmax(24px, 1fr));
+    gap: 3px;
+  }
+
+  .range-cell {
+    font-size: 10px;
+  }
+}
