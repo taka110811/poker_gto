@@ -32,6 +32,12 @@ const rangeState = {
 const betTreeState = {
   activeSizes: new Set(["0.33", "0.75"]),
 };
+const solverSettings = {
+  iterations: new URLSearchParams(window.location.search).get("testMode") === "1" ? 6 : 30,
+  comboLimit: 40,
+  version: "river-v1",
+};
+const solverCache = new Map();
 
 const els = {
   position: document.querySelector("#position"),
@@ -93,7 +99,10 @@ function makeCardSelect(id) {
   select.innerHTML = `<option value="">--</option>${deck()
     .map((card) => `<option value="${card}">${formatCard(card)}</option>`)
     .join("")}`;
-  select.addEventListener("change", sync);
+  select.addEventListener("change", () => {
+    invalidateSolverCache();
+    sync();
+  });
   return select;
 }
 
@@ -126,6 +135,10 @@ function sync() {
   renderCards(els.boardDisplay, board.filter(Boolean), duplicates);
   renderMatrix();
   if (board.filter(Boolean).length !== 5) resetRiverSolver("Board 5枚で有効");
+}
+
+function invalidateSolverCache() {
+  solverCache.clear();
 }
 
 function renderCards(container, cards, duplicates = new Set()) {
@@ -177,6 +190,7 @@ function cycleRangeFrequency(code) {
   const current = range[code] || 0;
   const nextIndex = (rangeSteps.indexOf(current) + 1) % rangeSteps.length;
   range[code] = rangeSteps[nextIndex];
+  invalidateSolverCache();
   renderMatrix();
   resetRiverSolver("Solveで再計算");
 }
@@ -226,6 +240,7 @@ function makePresetRange(rangeName) {
 
 function applyPreset(side, presetName) {
   rangeState[side] = makePresetRange(presetName);
+  invalidateSolverCache();
   renderMatrix();
   resetRiverSolver("Solveで再計算");
 }
@@ -470,15 +485,17 @@ function renderRiverSolver(board) {
 
   const pot = Number(els.pot.value || 0);
   const stack = Number(els.stack.value || 0);
+  let cacheHits = 0;
   const results = selectedBetSizes(pot, stack)
-    .map((candidate) => ({
-      ...candidate,
-      result: solveRiverSpot({
+    .map((candidate) => {
+      const solved = solveRiverSpotCached({
         board,
         pot,
         betSize: candidate.amount,
-      }),
-    }))
+      });
+      if (solved.cacheHit) cacheHits += 1;
+      return { ...candidate, result: solved.result };
+    })
     .filter((candidate) => candidate.result);
 
   if (!results.length) {
@@ -488,7 +505,7 @@ function renderRiverSolver(board) {
 
   const best = results.slice().sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
   const result = best.result;
-  els.riverStatus.textContent = `${result.oopCombos} OOP combos / ${result.ipCombos} IP combos`;
+  els.riverStatus.textContent = `${result.oopCombos} OOP combos / ${result.ipCombos} IP combos / ${cacheHits} cached`;
   els.oopBetFreq.textContent = pct(result.oopBet);
   els.oopCheckFreq.textContent = pct(1 - result.oopBet);
   els.ipCallFreq.textContent = pct(result.ipCall);
@@ -496,6 +513,35 @@ function renderRiverSolver(board) {
   els.oopCallFreq.textContent = pct(result.oopCall);
   els.riverEv.textContent = result.oopEv.toFixed(1);
   renderSizeResults(results, best.label);
+}
+
+function solveRiverSpotCached(input) {
+  const key = solverCacheKey(input);
+  if (solverCache.has(key)) return { result: solverCache.get(key), cacheHit: true };
+  const result = solveRiverSpot(input);
+  if (result) solverCache.set(key, result);
+  return { result, cacheHit: false };
+}
+
+function solverCacheKey({ board, pot, betSize }) {
+  return JSON.stringify({
+    version: solverSettings.version,
+    board: board.slice().sort(),
+    pot,
+    betSize,
+    iterations: solverSettings.iterations,
+    comboLimit: solverSettings.comboLimit,
+    oop: compactRangeKey(rangeState.oop),
+    ip: compactRangeKey(rangeState.ip),
+  });
+}
+
+function compactRangeKey(range) {
+  return Object.keys(range)
+    .sort()
+    .filter((code) => range[code] > 0)
+    .map((code) => `${code}:${range[code]}`)
+    .join(",");
 }
 
 function resetRiverSolver(status) {
@@ -551,7 +597,7 @@ function solveRiverSpot({ board, pot, betSize }) {
   if (!pairs.length || pot <= 0 || betSize <= 0) return null;
 
   const infosets = new Map();
-  const iterations = solverIterations();
+  const iterations = solverSettings.iterations;
   for (let i = 0; i < iterations; i += 1) {
     pairs.forEach(({ oop, ip, weight }) => {
       riverCfr("", oop, ip, board, pot, betSize, infosets, weight, weight);
@@ -574,10 +620,6 @@ function solveRiverSpot({ board, pot, betSize }) {
   };
 }
 
-function solverIterations() {
-  return new URLSearchParams(window.location.search).get("testMode") === "1" ? 6 : 30;
-}
-
 function rangeCombos(range, board) {
   const blocked = new Set(board);
   return choose(
@@ -592,7 +634,7 @@ function rangeCombos(range, board) {
     }))
     .filter((combo) => combo.frequency > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 40);
+    .slice(0, solverSettings.comboLimit);
 }
 
 function riverCfr(history, oop, ip, board, pot, betSize, infosets, oopReach, ipReach) {
@@ -757,8 +799,14 @@ function init() {
   for (let i = 0; i < 2; i += 1) els.heroCards.appendChild(makeCardSelect(`hero-${i}`));
   for (let i = 0; i < 5; i += 1) els.boardCards.appendChild(makeCardSelect(`board-${i}`));
   [els.position, els.villainRange, els.pot, els.toCall, els.stack, els.betSize].forEach((el) => {
-    el.addEventListener("input", sync);
-    el.addEventListener("change", sync);
+    el.addEventListener("input", () => {
+      invalidateSolverCache();
+      sync();
+    });
+    el.addEventListener("change", () => {
+      invalidateSolverCache();
+      sync();
+    });
   });
   els.oopRangeTab.addEventListener("click", () => setActiveRange("oop"));
   els.ipRangeTab.addEventListener("click", () => setActiveRange("ip"));
