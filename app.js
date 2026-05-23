@@ -93,6 +93,7 @@ const els = {
   precomputedStatus: document.querySelector("#precomputedStatus"),
   precomputedSpot: document.querySelector("#precomputedSpot"),
   precomputedActions: document.querySelector("#precomputedActions"),
+  precomputedActionRows: document.querySelector("#precomputedActionRows"),
 };
 
 function deck() {
@@ -554,6 +555,7 @@ async function loadPrecomputedSpots() {
     els.precomputedStatus.textContent = "Reference DB unavailable";
     els.precomputedSpot.textContent = "--";
     els.precomputedActions.textContent = "--";
+    renderPrecomputedActionRows([]);
     console.warn(error);
   }
 }
@@ -563,6 +565,7 @@ function renderPrecomputedReference(board) {
     els.precomputedStatus.textContent = "Loading reference DB";
     els.precomputedSpot.textContent = "--";
     els.precomputedActions.textContent = "--";
+    renderPrecomputedActionRows([]);
     return;
   }
 
@@ -570,6 +573,7 @@ function renderPrecomputedReference(board) {
     els.precomputedStatus.textContent = "Board 5枚で参照";
     els.precomputedSpot.textContent = "--";
     els.precomputedActions.textContent = "--";
+    renderPrecomputedActionRows([]);
     return;
   }
 
@@ -578,6 +582,7 @@ function renderPrecomputedReference(board) {
     els.precomputedStatus.textContent = "No solved spot available";
     els.precomputedSpot.textContent = "--";
     els.precomputedActions.textContent = "--";
+    renderPrecomputedActionRows([]);
     return;
   }
 
@@ -590,6 +595,22 @@ function renderPrecomputedReference(board) {
     .slice(0, 3)
     .map((action) => `${action.hand_code} ${action.action} ${pct(action.frequency)}`)
     .join(" / ");
+  renderPrecomputedActionRows(spot.actions);
+}
+
+function renderPrecomputedActionRows(actions) {
+  els.precomputedActionRows.innerHTML = "";
+  actions.forEach((action) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${action.hand_code}</td>
+      <td>${action.action}</td>
+      <td>${pct(action.frequency)}</td>
+      <td>${action.ev.toFixed(1)}</td>
+      <td>${pct(action.equity)}</td>
+    `;
+    els.precomputedActionRows.appendChild(row);
+  });
 }
 
 function findPrecomputedSpot(query) {
