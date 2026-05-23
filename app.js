@@ -35,6 +35,8 @@ const betTreeState = {
 const solverSettings = {
   iterations: new URLSearchParams(window.location.search).get("testMode") === "1" ? 6 : 30,
   comboLimit: 40,
+  turnComboLimit: 16,
+  turnRunoutLimit: new URLSearchParams(window.location.search).get("testMode") === "1" ? 4 : 8,
   version: "river-v1",
 };
 const solverCache = new Map();
@@ -42,6 +44,8 @@ const pendingRiverSolves = new Map();
 const riverWorker = createRiverWorker();
 const precomputedStore = createSqlitePrecomputedStore("./data/precomputed_spots.sqlite");
 let riverRequestId = 0;
+let turnRequestId = 0;
+let solverRequestId = 0;
 
 const els = {
   position: document.querySelector("#position"),
@@ -82,6 +86,14 @@ const els = {
   ipProbeFreq: document.querySelector("#ipProbeFreq"),
   oopCallFreq: document.querySelector("#oopCallFreq"),
   riverEv: document.querySelector("#riverEv"),
+  turnStatus: document.querySelector("#turnStatus"),
+  turnRunouts: document.querySelector("#turnRunouts"),
+  turnOopBetFreq: document.querySelector("#turnOopBetFreq"),
+  turnIpCallFreq: document.querySelector("#turnIpCallFreq"),
+  turnEv: document.querySelector("#turnEv"),
+  turnBestRiver: document.querySelector("#turnBestRiver"),
+  turnRangeCap: document.querySelector("#turnRangeCap"),
+  turnRunoutRows: document.querySelector("#turnRunoutRows"),
   sizeButtons: document.querySelectorAll(".size-button"),
   sizeResults: document.querySelector("#sizeResults"),
   runSimulation: document.querySelector("#runSimulation"),
@@ -198,11 +210,14 @@ function sync() {
   renderMatrix();
   renderPrecomputedReference(board.filter(Boolean));
   if (board.filter(Boolean).length !== 5) resetRiverSolver("Board 5枚で有効");
+  if (board.filter(Boolean).length !== 4) resetTurnSolver("Board 4枚で有効");
 }
 
 function invalidateSolverCache() {
   solverCache.clear();
-  riverRequestId += 1;
+  solverRequestId += 1;
+  riverRequestId = solverRequestId;
+  turnRequestId = solverRequestId;
 }
 
 function renderCards(container, cards, duplicates = new Set()) {
@@ -473,6 +488,7 @@ function simulate() {
   const decision = decide(equity);
   renderDecision(equity, decision, samples);
   renderRiverSolver(board.filter(Boolean));
+  renderTurnSolver(board.filter(Boolean), all);
   renderPrecomputedReference(board.filter(Boolean));
 }
 
@@ -737,9 +753,17 @@ function precomputedMatchReasons(query, spot) {
 }
 
 function renderRiverSolver(board) {
-  const requestId = riverRequestId + 1;
+  const requestId = solverRequestId + 1;
+  solverRequestId = requestId;
   riverRequestId = requestId;
   void renderRiverSolverAsync(board, requestId);
+}
+
+function renderTurnSolver(board, deadCards) {
+  const requestId = solverRequestId + 1;
+  solverRequestId = requestId;
+  turnRequestId = requestId;
+  void renderTurnSolverAsync(board, deadCards, requestId);
 }
 
 async function renderRiverSolverAsync(board, requestId) {
@@ -787,13 +811,58 @@ async function renderRiverSolverAsync(board, requestId) {
   renderSizeResults(results, best.label);
 }
 
+async function renderTurnSolverAsync(board, deadCards, requestId) {
+  if (board.length !== 4) {
+    resetTurnSolver("Board 4枚で有効");
+    return;
+  }
+
+  const pot = Number(els.pot.value || 0);
+  const stack = Number(els.stack.value || 0);
+  els.turnStatus.textContent = "Calculating runouts...";
+
+  let solved;
+  try {
+    solved = await solveTurnRunouts({
+      board,
+      deadCards,
+      pot,
+      stack,
+    });
+  } catch (error) {
+    if (requestId !== turnRequestId) return;
+    console.error(error);
+    resetTurnSolver("Solver error");
+    return;
+  }
+
+  if (requestId !== turnRequestId) return;
+
+  const { results, cacheHits, runoutCount } = solved;
+  if (!results.length) {
+    resetTurnSolver("レンジ不足");
+    return;
+  }
+
+  const average = averageTurnResults(results);
+  const best = results.slice().sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
+  els.turnStatus.textContent = `${runoutCount} runouts / ${cacheHits} cached`;
+  els.turnRunouts.textContent = String(runoutCount);
+  els.turnOopBetFreq.textContent = pct(average.oopBet);
+  els.turnIpCallFreq.textContent = pct(average.ipCall);
+  els.turnEv.textContent = average.oopEv.toFixed(1);
+  els.turnBestRiver.textContent = formatCard(best.riverCard);
+  els.turnRangeCap.textContent = `${solverSettings.turnComboLimit} combos`;
+  renderTurnRunoutRows(results);
+}
+
 function createRiverWorker() {
   if (!("Worker" in window)) return null;
 
   try {
     const worker = new Worker("./solver.worker.js");
     worker.onmessage = (event) => {
-      const { id, type, results, cacheHits, message } = event.data || {};
+      const { id, type, results, cacheHits, runoutCount, message } = event.data || {};
       const pending = pendingRiverSolves.get(id);
       if (!pending) return;
 
@@ -803,7 +872,7 @@ function createRiverWorker() {
         return;
       }
 
-      pending.resolve({ results, cacheHits });
+      pending.resolve({ results, cacheHits, runoutCount });
     };
     worker.onerror = (error) => {
       pendingRiverSolves.forEach(({ reject }) => reject(error));
@@ -832,11 +901,37 @@ function solveRiverCandidates({ board, pot, stack }) {
   return Promise.resolve(solveRiverCandidatesLocally(payload));
 }
 
+function solveTurnRunouts({ board, deadCards, pot, stack }) {
+  const payload = {
+    board,
+    pot,
+    candidates: selectedBetSizes(pot, stack),
+    deadCards,
+    oopRange: rangeState.oop,
+    ipRange: rangeState.ip,
+    iterations: solverSettings.iterations,
+    comboLimit: solverSettings.turnComboLimit,
+    runoutLimit: solverSettings.turnRunoutLimit,
+    version: solverSettings.version,
+  };
+
+  if (riverWorker) return solveTurnRunoutsWithWorker(payload);
+  return Promise.resolve(solveTurnRunoutsLocally(payload));
+}
+
 function solveRiverCandidatesWithWorker(payload) {
   const id = riverRequestId;
   return new Promise((resolve, reject) => {
     pendingRiverSolves.set(id, { resolve, reject });
     riverWorker.postMessage({ id, payload, type: "solve-river" });
+  });
+}
+
+function solveTurnRunoutsWithWorker(payload) {
+  const id = turnRequestId;
+  return new Promise((resolve, reject) => {
+    pendingRiverSolves.set(id, { resolve, reject });
+    riverWorker.postMessage({ id, payload, type: "solve-turn" });
   });
 }
 
@@ -848,6 +943,11 @@ function solveRiverCandidatesLocally(payload) {
         board: payload.board,
         pot: payload.pot,
         betSize: candidate.amount,
+        ipRange: payload.ipRange,
+        iterations: payload.iterations,
+        oopRange: payload.oopRange,
+        comboLimit: payload.comboLimit,
+        version: payload.version,
       });
       if (solved.cacheHit) cacheHits += 1;
       return { ...candidate, result: solved.result };
@@ -855,6 +955,37 @@ function solveRiverCandidatesLocally(payload) {
     .filter((candidate) => candidate.result);
 
   return { results, cacheHits };
+}
+
+function solveTurnRunoutsLocally(payload) {
+  let cacheHits = 0;
+  const runouts = turnRunoutCards(payload.deadCards, payload.runoutLimit);
+  const results = [];
+
+  runouts.forEach((riverCard) => {
+    const riverBoard = payload.board.concat(riverCard);
+    const best = payload.candidates
+      .map((candidate) => {
+        const solved = solveRiverSpotCached({
+          board: riverBoard,
+          pot: payload.pot,
+          betSize: candidate.amount,
+          ipRange: payload.ipRange,
+          iterations: payload.iterations,
+          oopRange: payload.oopRange,
+          comboLimit: payload.comboLimit,
+          version: payload.version,
+        });
+        if (solved.cacheHit) cacheHits += 1;
+        return { ...candidate, result: solved.result };
+      })
+      .filter((candidate) => candidate.result)
+      .sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
+
+    if (best) results.push({ riverCard, result: best.result });
+  });
+
+  return { results, cacheHits, runoutCount: runouts.length };
 }
 
 function solveRiverSpotCached(input) {
@@ -865,16 +996,25 @@ function solveRiverSpotCached(input) {
   return { result, cacheHit: false };
 }
 
-function solverCacheKey({ board, pot, betSize }) {
+function solverCacheKey({
+  board,
+  pot,
+  betSize,
+  iterations = solverSettings.iterations,
+  comboLimit = solverSettings.comboLimit,
+  version = solverSettings.version,
+  oopRange = rangeState.oop,
+  ipRange = rangeState.ip,
+}) {
   return JSON.stringify({
-    version: solverSettings.version,
+    version,
     board: board.slice().sort(),
     pot,
     betSize,
-    iterations: solverSettings.iterations,
-    comboLimit: solverSettings.comboLimit,
-    oop: compactRangeKey(rangeState.oop),
-    ip: compactRangeKey(rangeState.ip),
+    iterations,
+    comboLimit,
+    oop: compactRangeKey(oopRange),
+    ip: compactRangeKey(ipRange),
   });
 }
 
@@ -894,6 +1034,21 @@ function resetRiverSolver(status) {
     }
   );
   els.sizeResults.innerHTML = "";
+}
+
+function resetTurnSolver(status) {
+  els.turnStatus.textContent = status;
+  [els.turnRunouts, els.turnOopBetFreq, els.turnIpCallFreq, els.turnEv, els.turnBestRiver, els.turnRangeCap].forEach((el) => {
+    el.textContent = "--";
+  });
+  els.turnRunoutRows.innerHTML = "";
+}
+
+function turnRunoutCards(deadCards, limit) {
+  const blocked = new Set(deadCards.filter(Boolean));
+  return deck()
+    .filter((card) => !blocked.has(card))
+    .slice(0, limit);
 }
 
 function selectedBetSizes(pot, stack) {
@@ -925,9 +1080,43 @@ function renderSizeResults(results, bestLabel) {
   });
 }
 
-function solveRiverSpot({ board, pot, betSize }) {
-  const oopCombos = rangeCombos(rangeState.oop, board);
-  const ipCombos = rangeCombos(rangeState.ip, board);
+function averageTurnResults(results) {
+  const total = results.length || 1;
+  return results.reduce(
+    (acc, { result }) => ({
+      ipCall: acc.ipCall + result.ipCall / total,
+      oopBet: acc.oopBet + result.oopBet / total,
+      oopEv: acc.oopEv + result.oopEv / total,
+    }),
+    { ipCall: 0, oopBet: 0, oopEv: 0 }
+  );
+}
+
+function renderTurnRunoutRows(results) {
+  els.turnRunoutRows.innerHTML = "";
+  results.forEach(({ riverCard, result }) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${formatCard(riverCard)}</td>
+      <td>${pct(result.oopBet)}</td>
+      <td>${pct(result.ipCall)}</td>
+      <td>${result.oopEv.toFixed(1)}</td>
+    `;
+    els.turnRunoutRows.appendChild(row);
+  });
+}
+
+function solveRiverSpot({
+  board,
+  pot,
+  betSize,
+  oopRange = rangeState.oop,
+  ipRange = rangeState.ip,
+  iterations = solverSettings.iterations,
+  comboLimit = solverSettings.comboLimit,
+}) {
+  const oopCombos = rangeCombos(oopRange, board, comboLimit);
+  const ipCombos = rangeCombos(ipRange, board, comboLimit);
   const pairs = [];
 
   oopCombos.forEach((oop) => {
@@ -939,7 +1128,6 @@ function solveRiverSpot({ board, pot, betSize }) {
   if (!pairs.length || pot <= 0 || betSize <= 0) return null;
 
   const infosets = new Map();
-  const iterations = solverSettings.iterations;
   for (let i = 0; i < iterations; i += 1) {
     pairs.forEach(({ oop, ip, weight }) => {
       riverCfr("", oop, ip, board, pot, betSize, infosets, weight, weight);
@@ -962,7 +1150,7 @@ function solveRiverSpot({ board, pot, betSize }) {
   };
 }
 
-function rangeCombos(range, board) {
+function rangeCombos(range, board, comboLimit = solverSettings.comboLimit) {
   const blocked = new Set(board);
   return choose(
     deck().filter((card) => !blocked.has(card)),
@@ -976,7 +1164,7 @@ function rangeCombos(range, board) {
     }))
     .filter((combo) => combo.frequency > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, solverSettings.comboLimit);
+    .slice(0, comboLimit);
 }
 
 function riverCfr(history, oop, ip, board, pot, betSize, infosets, oopReach, ipReach) {

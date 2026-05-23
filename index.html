@@ -305,6 +305,60 @@
           </table>
         </div>
       </section>
+
+      <section class="panel turn-panel">
+        <div class="matrix-head">
+          <div>
+            <div class="section-heading">
+              <div class="section-title">Turn Solver Lite</div>
+              <span class="source-badge live">River Rollout</span>
+            </div>
+            <p>Board 4枚から小さいRiver runoutを列挙し、既存River solverで平均戦略を近似します。</p>
+          </div>
+          <span id="turnStatus">Waiting for turn</span>
+        </div>
+
+        <div class="river-grid">
+          <div class="river-metric">
+            <span>Runouts</span>
+            <strong id="turnRunouts">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Avg OOP bet</span>
+            <strong id="turnOopBetFreq">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Avg IP call</span>
+            <strong id="turnIpCallFreq">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Avg OOP EV</span>
+            <strong id="turnEv">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Best river</span>
+            <strong id="turnBestRiver">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Range cap</span>
+            <strong id="turnRangeCap">--</strong>
+          </div>
+        </div>
+
+        <div class="size-table-wrap">
+          <table class="size-table">
+            <thead>
+              <tr>
+                <th>River</th>
+                <th>OOP bet</th>
+                <th>IP call</th>
+                <th>OOP EV</th>
+              </tr>
+            </thead>
+            <tbody id="turnRunoutRows"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <script src="./vendor/sql.js/sql-wasm.js"></script>

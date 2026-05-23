@@ -80,3 +80,27 @@ test("shows exact precomputed reference for seeded river board", async ({ page }
   await expect(page.locator("#precomputedActionRows tr")).toHaveCount(3);
   expect(pageErrors).toEqual([]);
 });
+
+test("solves a turn spot by rolling out capped river cards", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  await page.locator("#hero-0").selectOption("Kh");
+  await page.locator("#hero-1").selectOption("Qd");
+  await page.locator("#board-0").selectOption("Ah");
+  await page.locator("#board-1").selectOption("8d");
+  await page.locator("#board-2").selectOption("4c");
+  await page.locator("#board-3").selectOption("2h");
+  await page.getByRole("button", { name: "Solve Spot" }).click();
+
+  await expect(page.locator("#turnStatus")).toContainText("runouts", { timeout: 10000 });
+  await expect(page.locator("#turnRunouts")).toHaveText("4");
+  await expect(page.locator("#turnOopBetFreq")).not.toHaveText("--");
+  await expect(page.locator("#turnIpCallFreq")).not.toHaveText("--");
+  await expect(page.locator("#turnBestRiver")).not.toHaveText("--");
+  await expect(page.locator("#turnRangeCap")).toHaveText("16 combos");
+  await expect(page.locator("#turnRunoutRows tr")).toHaveCount(4);
+  await expect(page.locator("#riverStatus")).toHaveText("Board 5枚で有効");
+  expect(pageErrors).toEqual([]);
+});
