@@ -40,7 +40,7 @@ const solverSettings = {
 const solverCache = new Map();
 const pendingRiverSolves = new Map();
 const riverWorker = createRiverWorker();
-const precomputedStore = createJsonPrecomputedStore("./data/precomputed_spots.json");
+const precomputedStore = createSqlitePrecomputedStore("./data/precomputed_spots.sqlite");
 let riverRequestId = 0;
 
 const els = {
@@ -551,22 +551,30 @@ async function loadPrecomputedSpots() {
   }
 }
 
-function createJsonPrecomputedStore(sourceUrl) {
+function createSqlitePrecomputedStore(sourceUrl) {
   let loaded = false;
-  let spots = [];
+  let db = null;
 
   return {
     get loaded() {
       return loaded;
     },
     async load() {
+      if (loaded) return;
+      if (!window.initSqlJs) throw new Error("sql.js runtime unavailable");
+
+      const SQL = await window.initSqlJs({
+        locateFile: (file) => `./vendor/sql.js/${file}`,
+      });
       const response = await fetch(sourceUrl);
       if (!response.ok) throw new Error(`Reference DB HTTP ${response.status}`);
-      const data = await response.json();
-      spots = data.spots || [];
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      db = new SQL.Database(bytes);
       loaded = true;
     },
     find(query) {
+      if (!db) return null;
+      const spots = selectPrecomputedSpots(db);
       const ranked = spots
         .map((spot) => ({ spot, score: precomputedMatchScore(query, spot) }))
         .sort((a, b) => b.score - a.score);
@@ -577,6 +585,49 @@ function createJsonPrecomputedStore(sourceUrl) {
       return { exact: reasons.length === 0, reasons, spot: best };
     },
   };
+}
+
+function selectPrecomputedSpots(db) {
+  const result = db.exec(`
+    SELECT
+      id,
+      street,
+      positions,
+      pot_type,
+      effective_stack_bb,
+      pot_bb,
+      board,
+      board_class,
+      bet_tree_key,
+      solver_name,
+      solver_version
+    FROM spots
+  `);
+  if (!result.length) return [];
+
+  return result[0].values.map((row) => {
+    const spot = Object.fromEntries(result[0].columns.map((column, index) => [column, row[index]]));
+    return {
+      ...spot,
+      board: spot.board.split(" "),
+      actions: selectPrecomputedActions(db, spot.id),
+    };
+  });
+}
+
+function selectPrecomputedActions(db, spotId) {
+  const statement = db.prepare(`
+    SELECT hand_code, action, frequency, ev, equity
+    FROM spot_actions
+    WHERE spot_id = :spot_id
+    ORDER BY ev DESC, hand_code ASC
+  `);
+  statement.bind({ ":spot_id": spotId });
+
+  const actions = [];
+  while (statement.step()) actions.push(statement.getAsObject());
+  statement.free();
+  return actions;
 }
 
 function resetPrecomputedReference(status) {
