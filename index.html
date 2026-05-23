@@ -170,6 +170,43 @@
         </div>
         <div id="rangeMatrix" class="range-matrix"></div>
       </section>
+
+      <section class="panel river-panel">
+        <div class="matrix-head">
+          <div>
+            <div class="section-title">River Mini Solver</div>
+            <p>Board 5枚、固定レンジ、Raiseなし、1 bet sizeでレンジ戦略を近似します。</p>
+          </div>
+          <span id="riverStatus">Waiting for river</span>
+        </div>
+
+        <div class="river-grid">
+          <div class="river-metric">
+            <span>OOP bet</span>
+            <strong id="oopBetFreq">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>OOP check</span>
+            <strong id="oopCheckFreq">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>IP call vs bet</span>
+            <strong id="ipCallFreq">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>IP bet vs check</span>
+            <strong id="ipProbeFreq">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>OOP call vs probe</span>
+            <strong id="oopCallFreq">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>OOP EV</span>
+            <strong id="riverEv">--</strong>
+          </div>
+        </div>
+      </section>
     </main>
 
     <script src="./app.js"></script>

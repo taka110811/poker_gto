@@ -19,5 +19,7 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
 
   await expect(page.locator("#equity")).not.toHaveText("--", { timeout: 10000 });
   await expect(page.locator("#actionFrequency")).not.toHaveText("--");
+  await expect(page.locator("#oopBetFreq")).not.toHaveText("--", { timeout: 10000 });
+  await expect(page.locator("#ipCallFreq")).not.toHaveText("--");
   expect(pageErrors).toEqual([]);
 });

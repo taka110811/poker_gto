@@ -52,6 +52,13 @@ const els = {
   raisePct: document.querySelector("#raisePct"),
   callPct: document.querySelector("#callPct"),
   foldPct: document.querySelector("#foldPct"),
+  riverStatus: document.querySelector("#riverStatus"),
+  oopBetFreq: document.querySelector("#oopBetFreq"),
+  oopCheckFreq: document.querySelector("#oopCheckFreq"),
+  ipCallFreq: document.querySelector("#ipCallFreq"),
+  ipProbeFreq: document.querySelector("#ipProbeFreq"),
+  oopCallFreq: document.querySelector("#oopCallFreq"),
+  riverEv: document.querySelector("#riverEv"),
   runSimulation: document.querySelector("#runSimulation"),
   randomDeal: document.querySelector("#randomDeal"),
   clearCards: document.querySelector("#clearCards"),
@@ -103,6 +110,7 @@ function sync() {
   renderCards(els.heroDisplay, hero.filter(Boolean), duplicates);
   renderCards(els.boardDisplay, board.filter(Boolean), duplicates);
   renderMatrix();
+  if (board.filter(Boolean).length !== 5) resetRiverSolver("Board 5枚で有効");
 }
 
 function renderCards(container, cards, duplicates = new Set()) {
@@ -314,6 +322,7 @@ function simulate() {
   const equity = (wins + ties * 0.5) / samples;
   const decision = decide(equity);
   renderDecision(equity, decision, samples);
+  renderRiverSolver(board.filter(Boolean));
 }
 
 function decide(equity) {
@@ -382,6 +391,215 @@ function setReason(message) {
   els.reasoning.textContent = message;
 }
 
+function renderRiverSolver(board) {
+  if (board.length !== 5) {
+    resetRiverSolver("Board 5枚で有効");
+    return;
+  }
+
+  const result = solveRiverSpot({
+    board,
+    pot: Number(els.pot.value || 0),
+    betSize: Number(els.betSize.value || 0),
+    ipRange: els.villainRange.value,
+  });
+
+  if (!result) {
+    resetRiverSolver("レンジ不足");
+    return;
+  }
+
+  els.riverStatus.textContent = `${result.oopCombos} OOP combos / ${result.ipCombos} IP combos`;
+  els.oopBetFreq.textContent = pct(result.oopBet);
+  els.oopCheckFreq.textContent = pct(1 - result.oopBet);
+  els.ipCallFreq.textContent = pct(result.ipCall);
+  els.ipProbeFreq.textContent = pct(result.ipProbe);
+  els.oopCallFreq.textContent = pct(result.oopCall);
+  els.riverEv.textContent = result.oopEv.toFixed(1);
+}
+
+function resetRiverSolver(status) {
+  els.riverStatus.textContent = status;
+  [els.oopBetFreq, els.oopCheckFreq, els.ipCallFreq, els.ipProbeFreq, els.oopCallFreq, els.riverEv].forEach(
+    (el) => {
+      el.textContent = "--";
+    }
+  );
+}
+
+function solveRiverSpot({ board, pot, betSize, ipRange }) {
+  const oopCombos = rangeCombos("standard", board);
+  const ipCombos = rangeCombos(ipRange, board);
+  const pairs = [];
+
+  oopCombos.forEach((oop) => {
+    ipCombos.forEach((ip) => {
+      if (!oop.cards.some((card) => ip.cards.includes(card))) pairs.push({ oop, ip });
+    });
+  });
+
+  if (!pairs.length || pot <= 0 || betSize <= 0) return null;
+
+  const infosets = new Map();
+  const iterations = 30;
+  for (let i = 0; i < iterations; i += 1) {
+    pairs.forEach(({ oop, ip }) => {
+      riverCfr("", oop, ip, board, pot, betSize, infosets, 1, 1);
+    });
+  }
+
+  const root = aggregateStrategy(infosets, pairs, "oop", "root", "oop");
+  const ipCall = aggregateStrategy(infosets, pairs, "ip", "vs-oop-bet", "ip");
+  const ipProbe = aggregateStrategy(infosets, pairs, "ip", "after-oop-check", "ip");
+  const oopCall = aggregateStrategy(infosets, pairs, "oop", "vs-ip-bet", "oop");
+
+  return {
+    oopBet: root[1],
+    ipCall: ipCall[1],
+    ipProbe: ipProbe[1],
+    oopCall: oopCall[1],
+    oopEv: averageRiverEv(pairs, board, pot, betSize, infosets),
+    oopCombos: oopCombos.length,
+    ipCombos: ipCombos.length,
+  };
+}
+
+function rangeCombos(rangeName, board) {
+  const threshold = rangePercentile[rangeName];
+  const ranked = allStartingHands().sort((a, b) => b.score - a.score);
+  const allowed = new Set(ranked.slice(0, Math.ceil(ranked.length * threshold)).map((hand) => hand.code));
+  const blocked = new Set(board);
+  return choose(
+    deck().filter((card) => !blocked.has(card)),
+    2
+  )
+    .filter(([a, b]) => allowed.has(handCode(a, b)))
+    .map((cards) => ({ cards, key: cards.join(""), score: startingHandScore(cards[0], cards[1]) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 40);
+}
+
+function riverCfr(history, oop, ip, board, pot, betSize, infosets, oopReach, ipReach) {
+  if (isRiverTerminal(history)) return riverUtility(history, oop.cards, ip.cards, board, pot, betSize);
+
+  const player = riverPlayer(history);
+  const actions = riverActions(history);
+  const combo = player === "oop" ? oop : ip;
+  const infoset = getInfoset(infosets, player, riverNodeName(history), combo.key, actions.length);
+  const strategy = currentStrategy(infoset, player === "oop" ? oopReach : ipReach);
+  const values = actions.map((action, index) =>
+    riverCfr(
+      history + action,
+      oop,
+      ip,
+      board,
+      pot,
+      betSize,
+      infosets,
+      player === "oop" ? oopReach * strategy[index] : oopReach,
+      player === "ip" ? ipReach * strategy[index] : ipReach
+    )
+  );
+  const nodeValue = values.reduce((sum, value, index) => sum + strategy[index] * value, 0);
+
+  values.forEach((value, index) => {
+    const regret = player === "oop" ? value - nodeValue : nodeValue - value;
+    infoset.regrets[index] += (player === "oop" ? ipReach : oopReach) * regret;
+  });
+
+  return nodeValue;
+}
+
+function isRiverTerminal(history) {
+  return ["XK", "XBF", "XBC", "BF", "BC"].includes(history);
+}
+
+function riverPlayer(history) {
+  if (history === "" || history === "XB") return "oop";
+  return "ip";
+}
+
+function riverNodeName(history) {
+  return { "": "root", X: "after-oop-check", XB: "vs-ip-bet", B: "vs-oop-bet" }[history];
+}
+
+function riverActions(history) {
+  if (history === "") return ["X", "B"];
+  if (history === "X") return ["K", "B"];
+  return ["F", "C"];
+}
+
+function riverUtility(history, oopCards, ipCards, board, pot, betSize) {
+  if (history === "BF") return pot;
+  if (history === "XBF") return 0;
+  if (history === "XK") return showdownEv(oopCards, ipCards, board, pot, 0);
+  return showdownEv(oopCards, ipCards, board, pot, betSize);
+}
+
+function showdownEv(oopCards, ipCards, board, pot, betSize) {
+  const result = compareHands(evaluateSeven(oopCards.concat(board)), evaluateSeven(ipCards.concat(board)));
+  if (result > 0) return pot + betSize;
+  if (result < 0) return -betSize;
+  return pot / 2;
+}
+
+function getInfoset(infosets, player, node, comboKey, actionCount) {
+  const key = `${player}:${node}:${comboKey}`;
+  if (!infosets.has(key)) {
+    infosets.set(key, {
+      regrets: Array(actionCount).fill(0),
+      strategySum: Array(actionCount).fill(0),
+    });
+  }
+  return infosets.get(key);
+}
+
+function currentStrategy(infoset, reach) {
+  const positives = infoset.regrets.map((regret) => Math.max(0, regret));
+  const total = positives.reduce((sum, regret) => sum + regret, 0);
+  const strategy = total > 0 ? positives.map((regret) => regret / total) : positives.map(() => 1 / positives.length);
+  strategy.forEach((value, index) => (infoset.strategySum[index] += reach * value));
+  return strategy;
+}
+
+function averageStrategy(infoset) {
+  const total = infoset.strategySum.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) return infoset.strategySum.map(() => 1 / infoset.strategySum.length);
+  return infoset.strategySum.map((value) => value / total);
+}
+
+function aggregateStrategy(infosets, pairs, player, node, side) {
+  const totals = [0, 0];
+  let weight = 0;
+  pairs.forEach(({ oop, ip }) => {
+    const combo = side === "oop" ? oop : ip;
+    const infoset = infosets.get(`${player}:${node}:${combo.key}`);
+    if (!infoset) return;
+    const strategy = averageStrategy(infoset);
+    totals[0] += strategy[0];
+    totals[1] += strategy[1];
+    weight += 1;
+  });
+  return weight > 0 ? totals.map((value) => value / weight) : [0.5, 0.5];
+}
+
+function averageRiverEv(pairs, board, pot, betSize, infosets) {
+  const total = pairs.reduce((sum, { oop, ip }) => sum + riverAverageUtility("", oop, ip, board, pot, betSize, infosets), 0);
+  return total / pairs.length;
+}
+
+function riverAverageUtility(history, oop, ip, board, pot, betSize, infosets) {
+  if (isRiverTerminal(history)) return riverUtility(history, oop.cards, ip.cards, board, pot, betSize);
+  const player = riverPlayer(history);
+  const node = riverNodeName(history);
+  const combo = player === "oop" ? oop : ip;
+  const strategy = averageStrategy(infosets.get(`${player}:${node}:${combo.key}`));
+  return riverActions(history).reduce(
+    (sum, action, index) => sum + strategy[index] * riverAverageUtility(history + action, oop, ip, board, pot, betSize, infosets),
+    0
+  );
+}
+
 function pct(value) {
   return `${Math.round(value * 100)}%`;
 }
@@ -402,7 +620,7 @@ function randomDeal() {
   const cards = shuffle(deck());
   const selects = [...els.heroCards.querySelectorAll("select"), ...els.boardCards.querySelectorAll("select")];
   selects.forEach((select, index) => {
-    select.value = index < 5 ? cards[index] : "";
+    select.value = cards[index];
   });
   sync();
 }
