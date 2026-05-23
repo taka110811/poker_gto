@@ -199,9 +199,19 @@
         <div class="matrix-head">
           <div>
             <div class="section-title">River Mini Solver</div>
-            <p>Board 5枚、固定レンジ、Raiseなし、1 bet sizeでレンジ戦略を近似します。</p>
+            <p>Board 5枚、固定レンジ、Raiseなし、fixed bet sizesでレンジ戦略を近似します。</p>
           </div>
           <span id="riverStatus">Waiting for river</span>
+        </div>
+
+        <div class="bet-tree">
+          <span>Bet size candidates</span>
+          <div class="size-buttons" role="group" aria-label="Bet size candidates">
+            <button class="size-button active" type="button" data-size="0.33">33% pot</button>
+            <button class="size-button active" type="button" data-size="0.75">75% pot</button>
+            <button class="size-button" type="button" data-size="1.25">125% pot</button>
+            <button class="size-button" type="button" data-size="allin">All-in</button>
+          </div>
         </div>
 
         <div class="river-grid">
@@ -229,6 +239,20 @@
             <span>OOP EV</span>
             <strong id="riverEv">--</strong>
           </div>
+        </div>
+
+        <div class="size-table-wrap">
+          <table class="size-table">
+            <thead>
+              <tr>
+                <th>Size</th>
+                <th>OOP bet</th>
+                <th>IP call</th>
+                <th>OOP EV</th>
+              </tr>
+            </thead>
+            <tbody id="sizeResults"></tbody>
+          </table>
         </div>
       </section>
     </main>

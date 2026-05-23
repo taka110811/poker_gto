@@ -29,6 +29,9 @@ const rangeState = {
   oop: {},
   ip: {},
 };
+const betTreeState = {
+  activeSizes: new Set(["0.33", "0.75"]),
+};
 
 const els = {
   position: document.querySelector("#position"),
@@ -69,6 +72,8 @@ const els = {
   ipProbeFreq: document.querySelector("#ipProbeFreq"),
   oopCallFreq: document.querySelector("#oopCallFreq"),
   riverEv: document.querySelector("#riverEv"),
+  sizeButtons: document.querySelectorAll(".size-button"),
+  sizeResults: document.querySelector("#sizeResults"),
   runSimulation: document.querySelector("#runSimulation"),
   randomDeal: document.querySelector("#randomDeal"),
   clearCards: document.querySelector("#clearCards"),
@@ -174,6 +179,23 @@ function cycleRangeFrequency(code) {
   range[code] = rangeSteps[nextIndex];
   renderMatrix();
   resetRiverSolver("Solveで再計算");
+}
+
+function toggleBetSize(size) {
+  if (betTreeState.activeSizes.has(size)) {
+    if (betTreeState.activeSizes.size === 1) return;
+    betTreeState.activeSizes.delete(size);
+  } else {
+    betTreeState.activeSizes.add(size);
+  }
+  renderBetSizeButtons();
+  resetRiverSolver("Solveで再計算");
+}
+
+function renderBetSizeButtons() {
+  els.sizeButtons.forEach((button) => {
+    button.classList.toggle("active", betTreeState.activeSizes.has(button.dataset.size));
+  });
 }
 
 function allStartingHands() {
@@ -446,17 +468,26 @@ function renderRiverSolver(board) {
     return;
   }
 
-  const result = solveRiverSpot({
-    board,
-    pot: Number(els.pot.value || 0),
-    betSize: Number(els.betSize.value || 0),
-  });
+  const pot = Number(els.pot.value || 0);
+  const stack = Number(els.stack.value || 0);
+  const results = selectedBetSizes(pot, stack)
+    .map((candidate) => ({
+      ...candidate,
+      result: solveRiverSpot({
+        board,
+        pot,
+        betSize: candidate.amount,
+      }),
+    }))
+    .filter((candidate) => candidate.result);
 
-  if (!result) {
+  if (!results.length) {
     resetRiverSolver("レンジ不足");
     return;
   }
 
+  const best = results.slice().sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
+  const result = best.result;
   els.riverStatus.textContent = `${result.oopCombos} OOP combos / ${result.ipCombos} IP combos`;
   els.oopBetFreq.textContent = pct(result.oopBet);
   els.oopCheckFreq.textContent = pct(1 - result.oopBet);
@@ -464,6 +495,7 @@ function renderRiverSolver(board) {
   els.ipProbeFreq.textContent = pct(result.ipProbe);
   els.oopCallFreq.textContent = pct(result.oopCall);
   els.riverEv.textContent = result.oopEv.toFixed(1);
+  renderSizeResults(results, best.label);
 }
 
 function resetRiverSolver(status) {
@@ -473,6 +505,36 @@ function resetRiverSolver(status) {
       el.textContent = "--";
     }
   );
+  els.sizeResults.innerHTML = "";
+}
+
+function selectedBetSizes(pot, stack) {
+  return [...betTreeState.activeSizes]
+    .map((size) => {
+      if (size === "allin") return { key: size, label: "All-in", amount: Math.max(1, stack) };
+      const ratio = Number(size);
+      return {
+        key: size,
+        label: `${Math.round(ratio * 100)}% pot`,
+        amount: Math.max(1, pot * ratio),
+      };
+    })
+    .sort((a, b) => a.amount - b.amount);
+}
+
+function renderSizeResults(results, bestLabel) {
+  els.sizeResults.innerHTML = "";
+  results.forEach(({ label, result }) => {
+    const row = document.createElement("tr");
+    if (label === bestLabel) row.classList.add("best-size");
+    row.innerHTML = `
+      <td>${label}</td>
+      <td>${pct(result.oopBet)}</td>
+      <td>${pct(result.ipCall)}</td>
+      <td>${result.oopEv.toFixed(1)}</td>
+    `;
+    els.sizeResults.appendChild(row);
+  });
 }
 
 function solveRiverSpot({ board, pot, betSize }) {
@@ -489,7 +551,7 @@ function solveRiverSpot({ board, pot, betSize }) {
   if (!pairs.length || pot <= 0 || betSize <= 0) return null;
 
   const infosets = new Map();
-  const iterations = 30;
+  const iterations = solverIterations();
   for (let i = 0; i < iterations; i += 1) {
     pairs.forEach(({ oop, ip, weight }) => {
       riverCfr("", oop, ip, board, pot, betSize, infosets, weight, weight);
@@ -510,6 +572,10 @@ function solveRiverSpot({ board, pot, betSize }) {
     oopCombos: oopCombos.length,
     ipCombos: ipCombos.length,
   };
+}
+
+function solverIterations() {
+  return new URLSearchParams(window.location.search).get("testMode") === "1" ? 6 : 30;
 }
 
 function rangeCombos(range, board) {
@@ -706,11 +772,15 @@ function init() {
     els.ipPreset.value = els.villainRange.value;
     applyPreset("ip", els.villainRange.value);
   });
+  els.sizeButtons.forEach((button) => {
+    button.addEventListener("click", () => toggleBetSize(button.dataset.size));
+  });
   els.runSimulation.addEventListener("click", simulate);
   els.randomDeal.addEventListener("click", randomDeal);
   els.clearCards.addEventListener("click", clearCards);
   rangeState.oop = makePresetRange(els.oopPreset.value);
   rangeState.ip = makePresetRange(els.ipPreset.value);
+  renderBetSizeButtons();
   sync();
 }
 
