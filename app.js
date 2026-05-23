@@ -40,6 +40,10 @@ const solverSettings = {
 const solverCache = new Map();
 const pendingRiverSolves = new Map();
 const riverWorker = createRiverWorker();
+const precomputedState = {
+  loaded: false,
+  spots: [],
+};
 let riverRequestId = 0;
 
 const els = {
@@ -86,6 +90,9 @@ const els = {
   runSimulation: document.querySelector("#runSimulation"),
   randomDeal: document.querySelector("#randomDeal"),
   clearCards: document.querySelector("#clearCards"),
+  precomputedStatus: document.querySelector("#precomputedStatus"),
+  precomputedSpot: document.querySelector("#precomputedSpot"),
+  precomputedActions: document.querySelector("#precomputedActions"),
 };
 
 function deck() {
@@ -114,6 +121,33 @@ function formatCard(card) {
   return `${card[0]}${suitSymbols[card[1]]}`;
 }
 
+function boardKey(board) {
+  return board.slice().sort().join(" ");
+}
+
+function boardClass(board) {
+  if (board.length !== 5) return "River board required";
+
+  const rankCounts = board.reduce((counts, card) => {
+    counts[card[0]] = (counts[card[0]] || 0) + 1;
+    return counts;
+  }, {});
+  const suitCounts = board.reduce((counts, card) => {
+    counts[card[1]] = (counts[card[1]] || 0) + 1;
+    return counts;
+  }, {});
+  const highRank = board
+    .map((card) => card[0])
+    .sort((a, b) => rankValues[b] - rankValues[a])[0];
+  const suitPattern = Object.keys(suitCounts).length === 1 ? "monotone" : Math.max(...Object.values(suitCounts)) >= 3 ? "two-tone" : "rainbow";
+  const values = [...new Set(board.map((card) => rankValues[card[0]]))].sort((a, b) => a - b);
+  const connected = values.some((value, index) => values[index + 3] - value <= 4);
+  const paired = Object.values(rankCounts).some((count) => count > 1);
+  const texture = paired ? "paired" : connected ? "connected" : "dry";
+
+  return `${highRank}-high ${suitPattern} ${texture}`;
+}
+
 function selectedCards() {
   const hero = [...els.heroCards.querySelectorAll("select")].map((select) => select.value);
   const board = [...els.boardCards.querySelectorAll("select")].map((select) => select.value);
@@ -137,6 +171,7 @@ function sync() {
   renderCards(els.heroDisplay, hero.filter(Boolean), duplicates);
   renderCards(els.boardDisplay, board.filter(Boolean), duplicates);
   renderMatrix();
+  renderPrecomputedReference(board.filter(Boolean));
   if (board.filter(Boolean).length !== 5) resetRiverSolver("Board 5枚で有効");
 }
 
@@ -413,6 +448,7 @@ function simulate() {
   const decision = decide(equity);
   renderDecision(equity, decision, samples);
   renderRiverSolver(board.filter(Boolean));
+  renderPrecomputedReference(board.filter(Boolean));
 }
 
 function decide(equity) {
@@ -479,6 +515,69 @@ function setBars(decision) {
 
 function setReason(message) {
   els.reasoning.textContent = message;
+}
+
+async function loadPrecomputedSpots() {
+  try {
+    const response = await fetch("./data/precomputed_spots.json");
+    if (!response.ok) throw new Error(`Reference DB HTTP ${response.status}`);
+    const data = await response.json();
+    precomputedState.loaded = true;
+    precomputedState.spots = data.spots || [];
+    renderPrecomputedReference(selectedCards().board.filter(Boolean));
+  } catch (error) {
+    precomputedState.loaded = false;
+    els.precomputedStatus.textContent = "Reference DB unavailable";
+    els.precomputedSpot.textContent = "--";
+    els.precomputedActions.textContent = "--";
+    console.warn(error);
+  }
+}
+
+function renderPrecomputedReference(board) {
+  if (!precomputedState.loaded) {
+    els.precomputedStatus.textContent = "Loading reference DB";
+    els.precomputedSpot.textContent = "--";
+    els.precomputedActions.textContent = "--";
+    return;
+  }
+
+  if (board.length !== 5) {
+    els.precomputedStatus.textContent = "Board 5枚で参照";
+    els.precomputedSpot.textContent = "--";
+    els.precomputedActions.textContent = "--";
+    return;
+  }
+
+  const match = findPrecomputedSpot(board);
+  if (!match) {
+    els.precomputedStatus.textContent = "No solved spot available";
+    els.precomputedSpot.textContent = "--";
+    els.precomputedActions.textContent = "--";
+    return;
+  }
+
+  const spot = match.spot;
+  els.precomputedStatus.textContent = match.exact ? "Exact precomputed spot" : `Approx: ${match.reason}`;
+  els.precomputedSpot.textContent = `${spot.positions} / ${spot.pot_type} / ${spot.board_class}`;
+  els.precomputedActions.textContent = spot.actions
+    .slice(0, 3)
+    .map((action) => `${action.hand_code} ${action.action} ${pct(action.frequency)}`)
+    .join(" / ");
+}
+
+function findPrecomputedSpot(board) {
+  const exactKey = boardKey(board);
+  const exact = precomputedState.spots.find((spot) => boardKey(spot.board) === exactKey);
+  if (exact) return { exact: true, spot: exact };
+
+  const targetClass = boardClass(board);
+  const sameClass = precomputedState.spots.find((spot) => spot.board_class === targetClass);
+  if (sameClass) return { exact: false, reason: `board class rounded to ${targetClass}`, spot: sameClass };
+
+  const fallback = precomputedState.spots[0];
+  if (!fallback) return null;
+  return { exact: false, reason: `board class rounded to ${fallback.board_class}`, spot: fallback };
 }
 
 function renderRiverSolver(board) {
@@ -916,6 +1015,7 @@ function init() {
   rangeState.oop = makePresetRange(els.oopPreset.value);
   rangeState.ip = makePresetRange(els.ipPreset.value);
   renderBetSizeButtons();
+  void loadPrecomputedSpots();
   sync();
 }
 

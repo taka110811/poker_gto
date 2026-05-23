@@ -1,0 +1,130 @@
+{
+  "spots": [
+    {
+      "id": "btn-bb-srp-river-ahigh-dry-100bb",
+      "street": "river",
+      "positions": "BTN vs BB",
+      "pot_type": "SRP",
+      "effective_stack_bb": 100,
+      "pot_bb": 12,
+      "board": [
+        "As",
+        "9d",
+        "4c",
+        "2h",
+        "7s"
+      ],
+      "board_class": "A-high two-tone dry",
+      "bet_tree_key": "river-no-raise-33-75",
+      "solver_name": "sample-precompute",
+      "solver_version": "2026-05-foundation",
+      "actions": [
+        {
+          "hand_code": "AA",
+          "action": "Bet 75%",
+          "frequency": 0.86,
+          "ev": 16.4,
+          "equity": 0.94
+        },
+        {
+          "hand_code": "AKs",
+          "action": "Bet 33%",
+          "frequency": 0.58,
+          "ev": 9.8,
+          "equity": 0.72
+        },
+        {
+          "hand_code": "QJs",
+          "action": "Check",
+          "frequency": 0.71,
+          "ev": 1.9,
+          "equity": 0.31
+        }
+      ]
+    },
+    {
+      "id": "btn-bb-srp-river-khigh-connected-100bb",
+      "street": "river",
+      "positions": "BTN vs BB",
+      "pot_type": "SRP",
+      "effective_stack_bb": 100,
+      "pot_bb": 12,
+      "board": [
+        "Ks",
+        "Qh",
+        "Td",
+        "6c",
+        "3h"
+      ],
+      "board_class": "K-high two-tone connected",
+      "bet_tree_key": "river-no-raise-33-75",
+      "solver_name": "sample-precompute",
+      "solver_version": "2026-05-foundation",
+      "actions": [
+        {
+          "hand_code": "AJ",
+          "action": "Bet 75%",
+          "frequency": 0.79,
+          "ev": 14.1,
+          "equity": 0.88
+        },
+        {
+          "hand_code": "KQ",
+          "action": "Bet 33%",
+          "frequency": 0.63,
+          "ev": 10.6,
+          "equity": 0.76
+        },
+        {
+          "hand_code": "99",
+          "action": "Check",
+          "frequency": 0.84,
+          "ev": 2.4,
+          "equity": 0.34
+        }
+      ]
+    },
+    {
+      "id": "btn-bb-srp-river-paired-100bb",
+      "street": "river",
+      "positions": "BTN vs BB",
+      "pot_type": "SRP",
+      "effective_stack_bb": 100,
+      "pot_bb": 12,
+      "board": [
+        "Qs",
+        "Qd",
+        "8c",
+        "5h",
+        "2s"
+      ],
+      "board_class": "Q-high two-tone paired",
+      "bet_tree_key": "river-no-raise-33-75",
+      "solver_name": "sample-precompute",
+      "solver_version": "2026-05-foundation",
+      "actions": [
+        {
+          "hand_code": "AQ",
+          "action": "Bet 75%",
+          "frequency": 0.82,
+          "ev": 15.2,
+          "equity": 0.91
+        },
+        {
+          "hand_code": "JJ",
+          "action": "Check",
+          "frequency": 0.67,
+          "ev": 5.8,
+          "equity": 0.57
+        },
+        {
+          "hand_code": "A5s",
+          "action": "Bet 33%",
+          "frequency": 0.38,
+          "ev": 4.7,
+          "equity": 0.49
+        }
+      ]
+    }
+  ]
+}
