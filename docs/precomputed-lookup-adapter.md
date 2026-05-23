@@ -2,7 +2,8 @@
 
 ## Current approach
 
-The app currently loads `data/precomputed_spots.json` through a small `precomputedStore` adapter in `app.js`.
+The app currently loads `data/precomputed_spots.sqlite` through a small `precomputedStore` adapter in `app.js`.
+The browser runtime uses `sql.js` from `vendor/sql.js/` and fetches the generated SQLite artifact directly.
 
 The UI depends on only two operations:
 
@@ -13,29 +14,31 @@ This keeps the UI independent from the storage format.
 
 ## Candidate storage backends
 
+### SQLite in browser
+
+Decision: selected.
+
+Pros:
+- Closest to the generated `precomputed_spots.sqlite` artifact.
+- Queries normalized tables directly.
+- Better fit for larger indexed datasets than loading a full JSON lookup document.
+- Keeps the static app deployment model.
+
+Cons:
+- Requires a browser SQLite runtime.
+- Adds `sql-wasm.js` and `sql-wasm.wasm` to static assets.
+- Needs mobile performance validation as the dataset grows.
+
 ### JSON
 
 Pros:
-- Already implemented.
-- Works in a static app without new dependencies.
+- Simple fallback format.
 - Easy to inspect and test.
 
 Cons:
 - Loads the whole dataset.
 - Lookup remains in memory and client-side.
 - Large datasets will increase initial transfer size.
-
-### SQLite in browser
-
-Pros:
-- Closest to the generated `precomputed_spots.sqlite` artifact.
-- Can query normalized tables directly.
-- Better fit for larger indexed datasets.
-
-Cons:
-- Requires a browser SQLite runtime.
-- Adds bundle size and initialization complexity.
-- Needs mobile performance validation.
 
 ### IndexedDB
 
@@ -49,13 +52,13 @@ Cons:
 - Query logic must be implemented around object stores and indexes.
 - More migration/versioning work.
 
-## Next PoC shape
+## Adapter shape
 
-Keep the current `precomputedStore` API and add one alternative adapter behind the same boundary:
+The UI uses this store API:
 
 ```text
 load() -> Promise<void>
 find(query) -> { exact, reasons, spot } | null
 ```
 
-The PoC should pass the existing Exact and Approx smoke tests without changing UI code.
+Future IndexedDB or remote adapters should keep this API and pass the existing Exact and Approx smoke tests without changing UI code.

@@ -49,6 +49,7 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#precomputedStatus")).toContainText("Approx");
   await expect(page.locator("#precomputedRecord")).toContainText("btn-bb-srp-river");
   await expect(page.locator("#precomputedSpot")).not.toHaveText("--");
+  await expect(page.locator("#precomputedSpot")).toContainText("river-no-raise-33-75");
   await expect(page.locator("#precomputedSolver")).toContainText("sample-precompute");
   await expect(page.locator("#precomputedActions")).toContainText("%");
   await expect(page.locator("#precomputedActionRows tr")).toHaveCount(3);
