@@ -112,7 +112,10 @@
         </section>
 
         <aside class="panel results" aria-label="Results">
-          <div class="section-title">Strategy Output</div>
+          <div class="section-heading">
+            <div class="section-title">Strategy Output</div>
+            <span class="source-badge">Approx EV</span>
+          </div>
           <div class="action-box">
             <span id="actionLabel">Solve to start</span>
             <strong id="actionFrequency">--</strong>
@@ -159,7 +162,10 @@
           </p>
 
           <div class="precomputed-box" aria-label="Precomputed strategy reference">
-            <div class="section-title">Solved Spot Reference</div>
+            <div class="section-heading">
+              <div class="section-title">Solved Spot Reference</div>
+              <span class="source-badge db">Precomputed DB</span>
+            </div>
             <p id="precomputedStatus">Loading reference DB</p>
             <dl>
               <div>
@@ -227,7 +233,10 @@
       <section class="panel river-panel">
         <div class="matrix-head">
           <div>
-            <div class="section-title">River Mini Solver</div>
+            <div class="section-heading">
+              <div class="section-title">River Mini Solver</div>
+              <span class="source-badge live">Live CFR</span>
+            </div>
             <p>Board 5枚、固定レンジ、Raiseなし、fixed bet sizesでレンジ戦略を近似します。</p>
           </div>
           <span id="riverStatus">Waiting for river</span>
