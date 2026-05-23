@@ -38,6 +38,9 @@ const solverSettings = {
   version: "river-v1",
 };
 const solverCache = new Map();
+const pendingRiverSolves = new Map();
+const riverWorker = createRiverWorker();
+let riverRequestId = 0;
 
 const els = {
   position: document.querySelector("#position"),
@@ -139,6 +142,7 @@ function sync() {
 
 function invalidateSolverCache() {
   solverCache.clear();
+  riverRequestId += 1;
 }
 
 function renderCards(container, cards, duplicates = new Set()) {
@@ -478,6 +482,12 @@ function setReason(message) {
 }
 
 function renderRiverSolver(board) {
+  const requestId = riverRequestId + 1;
+  riverRequestId = requestId;
+  void renderRiverSolverAsync(board, requestId);
+}
+
+async function renderRiverSolverAsync(board, requestId) {
   if (board.length !== 5) {
     resetRiverSolver("Board 5枚で有効");
     return;
@@ -485,18 +495,25 @@ function renderRiverSolver(board) {
 
   const pot = Number(els.pot.value || 0);
   const stack = Number(els.stack.value || 0);
-  let cacheHits = 0;
-  const results = selectedBetSizes(pot, stack)
-    .map((candidate) => {
-      const solved = solveRiverSpotCached({
-        board,
-        pot,
-        betSize: candidate.amount,
-      });
-      if (solved.cacheHit) cacheHits += 1;
-      return { ...candidate, result: solved.result };
-    })
-    .filter((candidate) => candidate.result);
+  els.riverStatus.textContent = "Calculating...";
+
+  let solved;
+  try {
+    solved = await solveRiverCandidates({
+      board,
+      pot,
+      stack,
+    });
+  } catch (error) {
+    if (requestId !== riverRequestId) return;
+    console.error(error);
+    resetRiverSolver("Solver error");
+    return;
+  }
+
+  if (requestId !== riverRequestId) return;
+
+  const { results, cacheHits } = solved;
 
   if (!results.length) {
     resetRiverSolver("レンジ不足");
@@ -513,6 +530,76 @@ function renderRiverSolver(board) {
   els.oopCallFreq.textContent = pct(result.oopCall);
   els.riverEv.textContent = result.oopEv.toFixed(1);
   renderSizeResults(results, best.label);
+}
+
+function createRiverWorker() {
+  if (!("Worker" in window)) return null;
+
+  try {
+    const worker = new Worker("./solver.worker.js");
+    worker.onmessage = (event) => {
+      const { id, type, results, cacheHits, message } = event.data || {};
+      const pending = pendingRiverSolves.get(id);
+      if (!pending) return;
+
+      pendingRiverSolves.delete(id);
+      if (type === "river-error") {
+        pending.reject(new Error(message || "Worker solver failed"));
+        return;
+      }
+
+      pending.resolve({ results, cacheHits });
+    };
+    worker.onerror = (error) => {
+      pendingRiverSolves.forEach(({ reject }) => reject(error));
+      pendingRiverSolves.clear();
+    };
+    return worker;
+  } catch (error) {
+    console.warn("River solver worker unavailable; falling back to main thread.", error);
+    return null;
+  }
+}
+
+function solveRiverCandidates({ board, pot, stack }) {
+  const payload = {
+    board,
+    pot,
+    candidates: selectedBetSizes(pot, stack),
+    oopRange: rangeState.oop,
+    ipRange: rangeState.ip,
+    iterations: solverSettings.iterations,
+    comboLimit: solverSettings.comboLimit,
+    version: solverSettings.version,
+  };
+
+  if (riverWorker) return solveRiverCandidatesWithWorker(payload);
+  return Promise.resolve(solveRiverCandidatesLocally(payload));
+}
+
+function solveRiverCandidatesWithWorker(payload) {
+  const id = riverRequestId;
+  return new Promise((resolve, reject) => {
+    pendingRiverSolves.set(id, { resolve, reject });
+    riverWorker.postMessage({ id, payload, type: "solve-river" });
+  });
+}
+
+function solveRiverCandidatesLocally(payload) {
+  let cacheHits = 0;
+  const results = payload.candidates
+    .map((candidate) => {
+      const solved = solveRiverSpotCached({
+        board: payload.board,
+        pot: payload.pot,
+        betSize: candidate.amount,
+      });
+      if (solved.cacheHit) cacheHits += 1;
+      return { ...candidate, result: solved.result };
+    })
+    .filter((candidate) => candidate.result);
+
+  return { results, cacheHits };
 }
 
 function solveRiverSpotCached(input) {
