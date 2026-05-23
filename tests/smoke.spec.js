@@ -19,6 +19,8 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await page.getByRole("button", { name: "IP Range" }).click();
   await page.getByText("AA").click();
   await expect(page.locator("#comboCount")).toContainText("IP");
+  await expect(page.getByRole("button", { name: "75% pot" })).toBeVisible();
+  await page.getByRole("button", { name: "125% pot" }).click();
 
   await page.getByRole("button", { name: "Random spot" }).click();
   await page.getByRole("button", { name: "Solve Spot" }).click();
@@ -27,5 +29,7 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.locator("#actionFrequency")).not.toHaveText("--");
   await expect(page.locator("#oopBetFreq")).not.toHaveText("--", { timeout: 10000 });
   await expect(page.locator("#ipCallFreq")).not.toHaveText("--");
+  await expect(page.locator("#sizeResults")).toContainText("33% pot");
+  await expect(page.locator("#sizeResults")).toContainText("125% pot");
   expect(pageErrors).toEqual([]);
 });
