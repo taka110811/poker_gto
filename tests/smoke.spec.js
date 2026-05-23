@@ -13,6 +13,12 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Poker GTO Solver Studio" })).toBeVisible();
   await expect(page.getByText("Approx EV")).toBeVisible();
   await expect(page.getByText("Chip EV")).toBeVisible();
+  await expect(page.getByRole("button", { name: "OOP Range" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "IP Range" })).toBeVisible();
+
+  await page.getByRole("button", { name: "IP Range" }).click();
+  await page.getByText("AA").click();
+  await expect(page.locator("#comboCount")).toContainText("IP");
 
   await page.getByRole("button", { name: "Random spot" }).click();
   await page.getByRole("button", { name: "Solve Spot" }).click();

@@ -163,10 +163,34 @@
       <section class="panel matrix-panel">
         <div class="matrix-head">
           <div>
-            <div class="section-title">Range Preview</div>
-            <p>Villain rangeに含まれるプリフロップハンドを濃く表示します。</p>
+            <div class="section-title">Range Builder</div>
+            <p>OOP/IPのレンジ頻度をクリックで 0 / 25 / 50 / 75 / 100% に変更します。</p>
           </div>
           <span id="comboCount">0 combos</span>
+        </div>
+        <div class="range-tabs" role="group" aria-label="Range side">
+          <button id="oopRangeTab" class="range-tab active" type="button">OOP Range</button>
+          <button id="ipRangeTab" class="range-tab" type="button">IP Range</button>
+        </div>
+        <div class="preset-row">
+          <label class="field compact">
+            <span>OOP preset</span>
+            <select id="oopPreset">
+              <option value="tight">Tight 18%</option>
+              <option value="standard" selected>Standard 30%</option>
+              <option value="wide">Wide 45%</option>
+              <option value="any">Any two</option>
+            </select>
+          </label>
+          <label class="field compact">
+            <span>IP preset</span>
+            <select id="ipPreset">
+              <option value="tight">Tight 18%</option>
+              <option value="standard" selected>Standard 30%</option>
+              <option value="wide">Wide 45%</option>
+              <option value="any">Any two</option>
+            </select>
+          </label>
         </div>
         <div id="rangeMatrix" class="range-matrix"></div>
       </section>

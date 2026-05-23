@@ -23,6 +23,12 @@ const rangeLabels = {
   wide: "Wide 45%",
   any: "Any two",
 };
+const rangeSteps = [0, 0.25, 0.5, 0.75, 1];
+const rangeState = {
+  activeSide: "oop",
+  oop: {},
+  ip: {},
+};
 
 const els = {
   position: document.querySelector("#position"),
@@ -39,6 +45,10 @@ const els = {
   potDisplay: document.querySelector("#potDisplay"),
   rangeMatrix: document.querySelector("#rangeMatrix"),
   comboCount: document.querySelector("#comboCount"),
+  oopRangeTab: document.querySelector("#oopRangeTab"),
+  ipRangeTab: document.querySelector("#ipRangeTab"),
+  oopPreset: document.querySelector("#oopPreset"),
+  ipPreset: document.querySelector("#ipPreset"),
   actionLabel: document.querySelector("#actionLabel"),
   actionFrequency: document.querySelector("#actionFrequency"),
   equity: document.querySelector("#equity"),
@@ -106,7 +116,7 @@ function sync() {
   });
 
   els.potDisplay.textContent = Number(els.pot.value || 0).toFixed(0);
-  els.rangeLabel.textContent = rangeLabels[els.villainRange.value];
+  els.rangeLabel.textContent = `IP ${rangeLabels[els.ipPreset.value]}`;
   renderCards(els.heroDisplay, hero.filter(Boolean), duplicates);
   renderCards(els.boardDisplay, board.filter(Boolean), duplicates);
   renderMatrix();
@@ -125,12 +135,9 @@ function renderCards(container, cards, duplicates = new Set()) {
 }
 
 function renderMatrix() {
-  const threshold = rangePercentile[els.villainRange.value];
   const { hero } = selectedCards();
   const heroHand = hero[0] && hero[1] ? handCode(hero[0], hero[1]) : "";
-  const hands = allStartingHands().sort((a, b) => b.score - a.score);
-  const cutoff = Math.ceil(hands.length * threshold);
-  const inRange = new Set(hands.slice(0, cutoff).map((hand) => hand.code));
+  const activeRange = rangeState[rangeState.activeSide];
 
   els.rangeMatrix.innerHTML = "";
   let comboCount = 0;
@@ -144,16 +151,29 @@ function renderMatrix() {
             : `${colRank}${rowRank}o`;
       const cell = document.createElement("div");
       cell.className = "range-cell";
-      if (inRange.has(code)) {
+      const frequency = activeRange[code] || 0;
+      if (frequency > 0) {
         cell.classList.add("in-range");
-        comboCount += comboCountFor(code);
+        cell.style.opacity = String(0.35 + frequency * 0.65);
+        comboCount += comboCountFor(code) * frequency;
       }
       if (code === heroHand) cell.classList.add("hero-hand");
-      cell.textContent = code;
+      cell.dataset.code = code;
+      cell.innerHTML = `${code}<small>${Math.round(frequency * 100)}%</small>`;
+      cell.addEventListener("click", () => cycleRangeFrequency(code));
       els.rangeMatrix.appendChild(cell);
     });
   });
-  els.comboCount.textContent = `${comboCount} combos`;
+  els.comboCount.textContent = `${rangeState.activeSide.toUpperCase()} ${comboCount.toFixed(0)} combos`;
+}
+
+function cycleRangeFrequency(code) {
+  const range = rangeState[rangeState.activeSide];
+  const current = range[code] || 0;
+  const nextIndex = (rangeSteps.indexOf(current) + 1) % rangeSteps.length;
+  range[code] = rangeSteps[nextIndex];
+  renderMatrix();
+  resetRiverSolver("Solveで再計算");
 }
 
 function allStartingHands() {
@@ -170,6 +190,29 @@ function allStartingHands() {
     });
   });
   return hands;
+}
+
+function makePresetRange(rangeName) {
+  const threshold = rangePercentile[rangeName];
+  const hands = allStartingHands().sort((a, b) => b.score - a.score);
+  const cutoff = Math.ceil(hands.length * threshold);
+  return hands.reduce((acc, hand, index) => {
+    acc[hand.code] = index < cutoff ? 1 : 0;
+    return acc;
+  }, {});
+}
+
+function applyPreset(side, presetName) {
+  rangeState[side] = makePresetRange(presetName);
+  renderMatrix();
+  resetRiverSolver("Solveで再計算");
+}
+
+function setActiveRange(side) {
+  rangeState.activeSide = side;
+  els.oopRangeTab.classList.toggle("active", side === "oop");
+  els.ipRangeTab.classList.toggle("active", side === "ip");
+  renderMatrix();
 }
 
 function comboCountFor(code) {
@@ -283,11 +326,17 @@ function choose(items, size) {
 }
 
 function villainHandFromRange(available) {
-  const threshold = rangePercentile[els.villainRange.value];
-  const hands = allStartingHands().sort((a, b) => b.score - a.score);
-  const allowed = new Set(hands.slice(0, Math.ceil(hands.length * threshold)).map((hand) => hand.code));
-  const candidates = choose(available, 2).filter(([a, b]) => allowed.has(handCode(a, b)));
-  return candidates[Math.floor(Math.random() * candidates.length)] || choose(available, 2)[0];
+  const candidates = choose(available, 2)
+    .map((cards) => ({ cards, frequency: rangeState.ip[handCode(cards[0], cards[1])] || 0 }))
+    .filter((combo) => combo.frequency > 0);
+  if (!candidates.length) return choose(available, 2)[0];
+  const total = candidates.reduce((sum, combo) => sum + combo.frequency, 0);
+  let roll = Math.random() * total;
+  for (const combo of candidates) {
+    roll -= combo.frequency;
+    if (roll <= 0) return combo.cards;
+  }
+  return candidates[candidates.length - 1].cards;
 }
 
 function simulate() {
@@ -401,7 +450,6 @@ function renderRiverSolver(board) {
     board,
     pot: Number(els.pot.value || 0),
     betSize: Number(els.betSize.value || 0),
-    ipRange: els.villainRange.value,
   });
 
   if (!result) {
@@ -427,14 +475,14 @@ function resetRiverSolver(status) {
   );
 }
 
-function solveRiverSpot({ board, pot, betSize, ipRange }) {
-  const oopCombos = rangeCombos("standard", board);
-  const ipCombos = rangeCombos(ipRange, board);
+function solveRiverSpot({ board, pot, betSize }) {
+  const oopCombos = rangeCombos(rangeState.oop, board);
+  const ipCombos = rangeCombos(rangeState.ip, board);
   const pairs = [];
 
   oopCombos.forEach((oop) => {
     ipCombos.forEach((ip) => {
-      if (!oop.cards.some((card) => ip.cards.includes(card))) pairs.push({ oop, ip });
+      if (!oop.cards.some((card) => ip.cards.includes(card))) pairs.push({ oop, ip, weight: oop.frequency * ip.frequency });
     });
   });
 
@@ -443,8 +491,8 @@ function solveRiverSpot({ board, pot, betSize, ipRange }) {
   const infosets = new Map();
   const iterations = 30;
   for (let i = 0; i < iterations; i += 1) {
-    pairs.forEach(({ oop, ip }) => {
-      riverCfr("", oop, ip, board, pot, betSize, infosets, 1, 1);
+    pairs.forEach(({ oop, ip, weight }) => {
+      riverCfr("", oop, ip, board, pot, betSize, infosets, weight, weight);
     });
   }
 
@@ -464,17 +512,19 @@ function solveRiverSpot({ board, pot, betSize, ipRange }) {
   };
 }
 
-function rangeCombos(rangeName, board) {
-  const threshold = rangePercentile[rangeName];
-  const ranked = allStartingHands().sort((a, b) => b.score - a.score);
-  const allowed = new Set(ranked.slice(0, Math.ceil(ranked.length * threshold)).map((hand) => hand.code));
+function rangeCombos(range, board) {
   const blocked = new Set(board);
   return choose(
     deck().filter((card) => !blocked.has(card)),
     2
   )
-    .filter(([a, b]) => allowed.has(handCode(a, b)))
-    .map((cards) => ({ cards, key: cards.join(""), score: startingHandScore(cards[0], cards[1]) }))
+    .map((cards) => ({
+      cards,
+      frequency: range[handCode(cards[0], cards[1])] || 0,
+      key: cards.join(""),
+      score: startingHandScore(cards[0], cards[1]),
+    }))
+    .filter((combo) => combo.frequency > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 40);
 }
@@ -576,16 +626,21 @@ function aggregateStrategy(infosets, pairs, player, node, side) {
     const infoset = infosets.get(`${player}:${node}:${combo.key}`);
     if (!infoset) return;
     const strategy = averageStrategy(infoset);
-    totals[0] += strategy[0];
-    totals[1] += strategy[1];
-    weight += 1;
+    const comboWeight = combo.frequency || 1;
+    totals[0] += strategy[0] * comboWeight;
+    totals[1] += strategy[1] * comboWeight;
+    weight += comboWeight;
   });
   return weight > 0 ? totals.map((value) => value / weight) : [0.5, 0.5];
 }
 
 function averageRiverEv(pairs, board, pot, betSize, infosets) {
-  const total = pairs.reduce((sum, { oop, ip }) => sum + riverAverageUtility("", oop, ip, board, pot, betSize, infosets), 0);
-  return total / pairs.length;
+  const totalWeight = pairs.reduce((sum, pair) => sum + pair.weight, 0);
+  const total = pairs.reduce(
+    (sum, { oop, ip, weight }) => sum + riverAverageUtility("", oop, ip, board, pot, betSize, infosets) * weight,
+    0
+  );
+  return total / totalWeight;
 }
 
 function riverAverageUtility(history, oop, ip, board, pot, betSize, infosets) {
@@ -639,9 +694,23 @@ function init() {
     el.addEventListener("input", sync);
     el.addEventListener("change", sync);
   });
+  els.oopRangeTab.addEventListener("click", () => setActiveRange("oop"));
+  els.ipRangeTab.addEventListener("click", () => setActiveRange("ip"));
+  els.oopPreset.addEventListener("change", () => applyPreset("oop", els.oopPreset.value));
+  els.ipPreset.addEventListener("change", () => {
+    applyPreset("ip", els.ipPreset.value);
+    els.villainRange.value = els.ipPreset.value;
+    sync();
+  });
+  els.villainRange.addEventListener("change", () => {
+    els.ipPreset.value = els.villainRange.value;
+    applyPreset("ip", els.villainRange.value);
+  });
   els.runSimulation.addEventListener("click", simulate);
   els.randomDeal.addEventListener("click", randomDeal);
   els.clearCards.addEventListener("click", clearCards);
+  rangeState.oop = makePresetRange(els.oopPreset.value);
+  rangeState.ip = makePresetRange(els.ipPreset.value);
   sync();
 }
 
