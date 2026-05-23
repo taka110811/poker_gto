@@ -1,11 +1,16 @@
 const { expect, test } = require("@playwright/test");
 
-test("loads solver workspace and solves a random spot", async ({ page }) => {
+function collectPageErrors(page) {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error") pageErrors.push(message.text());
   });
+  return pageErrors;
+}
+
+test("loads solver workspace and solves a random spot", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
 
   await page.goto("/?testMode=1");
 
@@ -44,5 +49,24 @@ test("loads solver workspace and solves a random spot", async ({ page }) => {
   await expect(page.locator("#precomputedActionRows")).toContainText("Bet");
   await page.getByRole("button", { name: "Solve Spot" }).click();
   await expect(page.locator("#riverStatus")).toContainText("cached");
+  expect(pageErrors).toEqual([]);
+});
+
+test("shows exact precomputed reference for seeded river board", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  await page.locator("#stack").fill("100");
+  await page.locator("#board-0").selectOption("As");
+  await page.locator("#board-1").selectOption("9d");
+  await page.locator("#board-2").selectOption("4c");
+  await page.locator("#board-3").selectOption("2h");
+  await page.locator("#board-4").selectOption("7s");
+
+  await expect(page.locator("#precomputedStatus")).toHaveText("Exact precomputed spot");
+  await expect(page.locator("#precomputedRecord")).toHaveText("btn-bb-srp-river-ahigh-dry-100bb");
+  await expect(page.locator("#precomputedSolver")).toContainText("2026-05-foundation");
+  await expect(page.locator("#precomputedActionRows tr")).toHaveCount(3);
   expect(pageErrors).toEqual([]);
 });
