@@ -14,7 +14,7 @@
         "2h",
         "7s"
       ],
-      "board_class": "A-high two-tone dry",
+      "board_class": "A-high rainbow dry",
       "bet_tree_key": "river-no-raise-33-75",
       "solver_name": "sample-precompute",
       "solver_version": "2026-05-foundation",
@@ -56,7 +56,7 @@
         "6c",
         "3h"
       ],
-      "board_class": "K-high two-tone connected",
+      "board_class": "K-high rainbow connected",
       "bet_tree_key": "river-no-raise-33-75",
       "solver_name": "sample-precompute",
       "solver_version": "2026-05-foundation",
@@ -98,7 +98,7 @@
         "5h",
         "2s"
       ],
-      "board_class": "Q-high two-tone paired",
+      "board_class": "Q-high rainbow paired",
       "bet_tree_key": "river-no-raise-33-75",
       "solver_name": "sample-precompute",
       "solver_version": "2026-05-foundation",
