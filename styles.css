@@ -123,6 +123,10 @@ p {
   font-size: 13px;
 }
 
+.field.compact {
+  margin-bottom: 0;
+}
+
 input,
 select {
   width: 100%;
@@ -371,6 +375,33 @@ button {
   font-size: 13px;
 }
 
+.range-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.range-tab {
+  min-height: 38px;
+  border-color: var(--line);
+  background: #11161a;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.range-tab.active {
+  background: var(--green-2);
+  color: #07120d;
+}
+
+.preset-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .range-matrix {
   display: grid;
   grid-template-columns: repeat(13, minmax(34px, 1fr));
@@ -380,6 +411,7 @@ button {
 .range-cell {
   display: grid;
   place-items: center;
+  gap: 2px;
   aspect-ratio: 1;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -387,11 +419,19 @@ button {
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
+  cursor: pointer;
 }
 
 .range-cell.in-range {
   background: color-mix(in srgb, var(--green) 62%, #12181c);
   color: var(--text);
+}
+
+.range-cell small {
+  color: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.82;
 }
 
 .range-cell.hero-hand {
