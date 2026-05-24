@@ -146,6 +146,34 @@ test("applies spot browser cards and highlights the active preset", async ({ pag
   expect(pageErrors).toEqual([]);
 });
 
+test("filters spot browser cards by street and texture", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  await expect(page.locator(".spot-card")).toHaveCount(15);
+  await expect(page.locator("#spotBrowserCount")).toHaveText("15 spots");
+
+  await page.locator("#spotStreetFilter").selectOption("Flop");
+  await expect(page.locator(".spot-card")).toHaveCount(6);
+  await expect(page.locator("#spotBrowserCount")).toHaveText("6 Flop spots");
+  await expect(page.locator('.spot-card[data-preset="btn-bb-srp-turn"]')).toHaveCount(0);
+
+  await page.locator("#spotTextureFilter").selectOption("monotone");
+  await expect(page.locator(".spot-card")).toHaveCount(1);
+  await expect(page.locator('.spot-card[data-preset="btn-bb-srp-flop-monotone"]')).toBeVisible();
+
+  await page.locator("#spotStreetFilter").selectOption("River");
+  await expect(page.locator(".spot-card")).toHaveCount(0);
+  await expect(page.locator("#spotBrowserCount")).toHaveText("0 spots");
+
+  await page.locator("#spotTextureFilter").selectOption("all");
+  await expect(page.locator(".spot-card")).toHaveCount(5);
+  await expect(page.locator("#spotBrowserCount")).toHaveText("5 River spots");
+
+  expect(pageErrors).toEqual([]);
+});
+
 test("solves a turn spot by rolling out capped river cards", async ({ page }) => {
   const pageErrors = collectPageErrors(page);
 

@@ -63,7 +63,33 @@
             </select>
           </label>
           <div class="spot-browser" aria-label="Spot Browser Lite">
-            <div class="section-title">Spot Browser Lite</div>
+            <div class="section-heading">
+              <div class="section-title">Spot Browser Lite</div>
+              <span id="spotBrowserCount" class="source-badge">0 spots</span>
+            </div>
+            <div class="spot-filters">
+              <label class="field compact">
+                <span>Street</span>
+                <select id="spotStreetFilter">
+                  <option value="all">All streets</option>
+                  <option value="Flop">Flop</option>
+                  <option value="Turn">Turn</option>
+                  <option value="River">River</option>
+                </select>
+              </label>
+              <label class="field compact">
+                <span>Texture</span>
+                <select id="spotTextureFilter">
+                  <option value="all">All textures</option>
+                  <option value="dry">Dry</option>
+                  <option value="wet">Wet</option>
+                  <option value="paired">Paired</option>
+                  <option value="monotone">Monotone</option>
+                  <option value="flush">Flush</option>
+                  <option value="connected">Connected</option>
+                </select>
+              </label>
+            </div>
             <div id="spotCards" class="spot-cards"></div>
           </div>
 
