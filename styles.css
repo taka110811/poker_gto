@@ -120,6 +120,12 @@ p {
   white-space: nowrap;
 }
 
+.view-nav a.active {
+  border-color: rgba(43, 191, 132, 0.7);
+  color: #07120d;
+  background: var(--green-2);
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(280px, 340px) minmax(360px, 1fr) minmax(300px, 360px);
@@ -189,6 +195,12 @@ p {
   border-color: rgba(240, 184, 76, 0.5);
   color: #f9e5b8;
   background: rgba(240, 184, 76, 0.12);
+}
+
+.source-badge.setup {
+  border-color: rgba(43, 191, 132, 0.45);
+  color: #c7f2df;
+  background: rgba(43, 191, 132, 0.12);
 }
 
 .field {
@@ -513,6 +525,26 @@ button {
 .flop-panel {
   margin-top: 16px;
   padding: 16px;
+}
+
+.street-panel {
+  transition:
+    border-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.street-panel.is-active {
+  border-color: rgba(43, 191, 132, 0.65);
+}
+
+.street-panel.is-inactive {
+  opacity: 0.74;
+}
+
+.street-panel.is-inactive .bet-tree,
+.street-panel.is-inactive .river-grid,
+.street-panel.is-inactive .size-table-wrap {
+  display: none;
 }
 
 .matrix-head {
