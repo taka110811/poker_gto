@@ -23,88 +23,7 @@ const rangeLabels = {
   wide: "Wide 45%",
   any: "Any two",
 };
-const spotPresets = {
-  "btn-bb-srp-flop-dry": {
-    name: "BTN vs BB SRP Flop - Dry A-high",
-    street: "Flop",
-    spot: "BTN vs BB SRP",
-    texture: "Dry A-high",
-    position: "BTN",
-    villainRange: "standard",
-    oopPreset: "standard",
-    ipPreset: "standard",
-    pot: 12,
-    toCall: 4,
-    stack: 85,
-    betSize: 8,
-    hero: ["Kh", "Qd"],
-    board: ["Ah", "8d", "4c", "", ""],
-  },
-  "btn-bb-srp-turn": {
-    name: "BTN vs BB SRP Turn",
-    street: "Turn",
-    spot: "BTN vs BB SRP",
-    texture: "A-high turn",
-    position: "BTN",
-    villainRange: "standard",
-    oopPreset: "standard",
-    ipPreset: "standard",
-    pot: 18,
-    toCall: 6,
-    stack: 78,
-    betSize: 12,
-    hero: ["Kh", "Qd"],
-    board: ["Ah", "8d", "4c", "2h", ""],
-  },
-  "btn-bb-srp-river": {
-    name: "BTN vs BB SRP River",
-    street: "River",
-    spot: "BTN vs BB SRP",
-    texture: "A-high river",
-    position: "BTN",
-    villainRange: "standard",
-    oopPreset: "standard",
-    ipPreset: "standard",
-    pot: 24,
-    toCall: 8,
-    stack: 70,
-    betSize: 16,
-    hero: ["Kh", "Qd"],
-    board: ["Ah", "8d", "4c", "2h", "7s"],
-  },
-  "btn-bb-wet-flop": {
-    name: "BTN vs BB SRP Flop - Wet board",
-    street: "Flop",
-    spot: "BTN vs BB SRP",
-    texture: "Wet broadway",
-    position: "BTN",
-    villainRange: "wide",
-    oopPreset: "standard",
-    ipPreset: "wide",
-    pot: 12,
-    toCall: 4,
-    stack: 90,
-    betSize: 8,
-    hero: ["As", "Ks"],
-    board: ["Qs", "Js", "Td", "", ""],
-  },
-  "sb-bb-short-river": {
-    name: "SB vs BB Short stack River",
-    street: "River",
-    spot: "SB vs BB",
-    texture: "Short stack",
-    position: "SB",
-    villainRange: "wide",
-    oopPreset: "wide",
-    ipPreset: "wide",
-    pot: 30,
-    toCall: 10,
-    stack: 28,
-    betSize: 20,
-    hero: ["Ac", "Jc"],
-    board: ["As", "9d", "4c", "2h", "7s"],
-  },
-};
+let spotPresets = {};
 const rangeSteps = [0, 0.25, 0.5, 0.75, 1];
 const rangeState = {
   activeSide: "oop",
@@ -377,6 +296,30 @@ function updateSpotCards() {
   els.spotCards.querySelectorAll(".spot-card").forEach((button) => {
     button.classList.toggle("active", button.dataset.preset === els.spotPreset.value);
   });
+}
+
+function renderSpotPresetOptions() {
+  els.spotPreset.innerHTML = '<option value="">Custom spot</option>';
+  Object.entries(spotPresets).forEach(([key, preset]) => {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = preset.name;
+    els.spotPreset.appendChild(option);
+  });
+}
+
+async function loadSpotPresets() {
+  try {
+    const response = await fetch("./data/spot_presets.json");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    spotPresets = Object.fromEntries(data.spots.map((preset) => [preset.id, preset]));
+    renderSpotPresetOptions();
+    renderSpotCards();
+  } catch (error) {
+    console.error(error);
+    setRangeFeedback("Spot presets unavailable");
+  }
 }
 
 function invalidateSolverCache() {
@@ -1736,6 +1679,7 @@ function applySpotPreset(presetKey) {
 
 function renderSpotCards() {
   els.spotCards.innerHTML = "";
+  if (!Object.keys(spotPresets).length) return;
   Object.entries(spotPresets).forEach(([key, preset]) => {
     const button = document.createElement("button");
     button.className = "spot-card";
@@ -1759,7 +1703,6 @@ function renderSpotCards() {
 function init() {
   for (let i = 0; i < 2; i += 1) els.heroCards.appendChild(makeCardSelect(`hero-${i}`));
   for (let i = 0; i < 5; i += 1) els.boardCards.appendChild(makeCardSelect(`board-${i}`));
-  renderSpotCards();
   [els.position, els.villainRange, els.pot, els.toCall, els.stack, els.betSize].forEach((el) => {
     el.addEventListener("input", () => {
       els.spotPreset.value = "";
@@ -1798,6 +1741,7 @@ function init() {
   rangeState.ip = makePresetRange(els.ipPreset.value);
   renderRangeEditorToggle();
   renderBetSizeButtons();
+  void loadSpotPresets();
   void loadPrecomputedSpots();
   sync();
 }
