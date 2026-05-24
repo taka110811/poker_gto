@@ -31,10 +31,6 @@ const rangeState = {
   oop: {},
   ip: {},
 };
-const spotFilterState = {
-  street: "all",
-  texture: "all",
-};
 const betTreeState = {
   activeSizes: new Set(["0.33", "0.75"]),
 };
@@ -144,6 +140,15 @@ const els = {
   precomputedActions: document.querySelector("#precomputedActions"),
   precomputedActionRows: document.querySelector("#precomputedActionRows"),
 };
+
+const spotBrowser = window.PokerGtoSpotBrowser.createSpotBrowser({
+  select: els.spotPreset,
+  count: els.spotBrowserCount,
+  cards: els.spotCards,
+  streetFilter: els.spotStreetFilter,
+  textureFilter: els.spotTextureFilter,
+  onSelect: applySpotPreset,
+});
 
 function deck() {
   return ranks
@@ -300,54 +305,13 @@ function updateStreetPanels(boardCount) {
 }
 
 function updateSpotCards() {
-  els.spotCards.querySelectorAll(".spot-card").forEach((button) => {
-    button.classList.toggle("active", button.dataset.preset === els.spotPreset.value);
-  });
-}
-
-function renderSpotPresetOptions() {
-  els.spotPreset.innerHTML = '<option value="">Custom spot</option>';
-  Object.entries(spotPresets).forEach(([key, preset]) => {
-    const option = document.createElement("option");
-    option.value = key;
-    option.textContent = preset.name;
-    els.spotPreset.appendChild(option);
-  });
-}
-
-function spotMatchesTextureFilter(texture, filter) {
-  if (filter === "all") return true;
-  const value = texture.toLowerCase();
-  if (filter === "monotone") return value.includes("monotone");
-  if (filter === "paired") return value.includes("paired") || value.includes("pairing");
-  if (filter === "flush") return value.includes("flush");
-  if (filter === "connected") return value.includes("connected");
-  if (filter === "dry") return value.includes("dry") || value.includes("brick") || value.includes("blank");
-  if (filter === "wet") return value.includes("wet");
-  return false;
-}
-
-function spotMatchesFilters(preset) {
-  const streetMatches = spotFilterState.street === "all" || preset.street === spotFilterState.street;
-  const textureMatches = spotMatchesTextureFilter(preset.texture, spotFilterState.texture);
-  return streetMatches && textureMatches;
-}
-
-function spotBrowserCountLabel(count) {
-  if (spotFilterState.street !== "all" && spotFilterState.texture === "all") {
-    return `${count} ${spotFilterState.street} spots`;
-  }
-  return `${count} spots`;
+  spotBrowser.updateActive(els.spotPreset.value);
 }
 
 async function loadSpotPresets() {
   try {
-    const response = await fetch("./data/spot_presets.json");
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    spotPresets = Object.fromEntries(data.spots.map((preset) => [preset.id, preset]));
-    renderSpotPresetOptions();
-    renderSpotCards();
+    spotPresets = await window.PokerGtoSpotPresets.loadSpotPresets("./data/spot_presets.json");
+    spotBrowser.setPresets(spotPresets);
   } catch (error) {
     console.error(error);
     setRangeFeedback("Spot presets unavailable");
@@ -1709,37 +1673,6 @@ function applySpotPreset(presetKey) {
   updateSpotCards();
 }
 
-function renderSpotCards() {
-  els.spotCards.innerHTML = "";
-  if (!Object.keys(spotPresets).length) return;
-  const filteredPresets = Object.entries(spotPresets).filter(([, preset]) => spotMatchesFilters(preset));
-  els.spotBrowserCount.textContent = spotBrowserCountLabel(filteredPresets.length);
-  filteredPresets.forEach(([key, preset]) => {
-    const button = document.createElement("button");
-    button.className = "spot-card";
-    button.type = "button";
-    button.dataset.preset = key;
-    button.innerHTML = `
-      <span>${preset.street}</span>
-      <strong>${preset.spot}</strong>
-      <small>${preset.texture}</small>
-      <b>${preset.stack}bb stack / ${preset.pot}bb pot</b>
-    `;
-    button.addEventListener("click", () => {
-      els.spotPreset.value = key;
-      applySpotPreset(key);
-    });
-    els.spotCards.appendChild(button);
-  });
-  updateSpotCards();
-}
-
-function updateSpotFilters() {
-  spotFilterState.street = els.spotStreetFilter.value;
-  spotFilterState.texture = els.spotTextureFilter.value;
-  renderSpotCards();
-}
-
 function init() {
   for (let i = 0; i < 2; i += 1) els.heroCards.appendChild(makeCardSelect(`hero-${i}`));
   for (let i = 0; i < 5; i += 1) els.boardCards.appendChild(makeCardSelect(`board-${i}`));
@@ -1757,9 +1690,6 @@ function init() {
       sync();
     });
   });
-  els.spotPreset.addEventListener("change", () => applySpotPreset(els.spotPreset.value));
-  els.spotStreetFilter.addEventListener("change", updateSpotFilters);
-  els.spotTextureFilter.addEventListener("change", updateSpotFilters);
   els.oopRangeTab.addEventListener("click", () => setActiveRange("oop"));
   els.ipRangeTab.addEventListener("click", () => setActiveRange("ip"));
   els.oopPreset.addEventListener("change", () => applyPreset("oop", els.oopPreset.value));
