@@ -62,6 +62,7 @@ const els = {
   boardDisplay: document.querySelector("#boardDisplay"),
   rangeLabel: document.querySelector("#rangeLabel"),
   potDisplay: document.querySelector("#potDisplay"),
+  streetSummary: document.querySelector("#streetSummary"),
   rangeMatrix: document.querySelector("#rangeMatrix"),
   comboCount: document.querySelector("#comboCount"),
   oopRangeTab: document.querySelector("#oopRangeTab"),
@@ -213,6 +214,7 @@ function selectedCards() {
 
 function sync() {
   const { hero, board, all } = selectedCards();
+  const knownBoard = board.filter(Boolean);
   const duplicates = new Set();
   all.forEach((card, index) => {
     if (all.indexOf(card) !== index) duplicates.add(card);
@@ -224,14 +226,23 @@ function sync() {
   });
 
   els.potDisplay.textContent = Number(els.pot.value || 0).toFixed(0);
+  els.streetSummary.textContent = streetLabel(knownBoard.length);
   els.rangeLabel.textContent = `IP ${rangeLabels[els.ipPreset.value]}`;
   renderCards(els.heroDisplay, hero.filter(Boolean), duplicates);
-  renderCards(els.boardDisplay, board.filter(Boolean), duplicates);
+  renderCards(els.boardDisplay, knownBoard, duplicates);
   renderMatrix();
-  renderPrecomputedReference(board.filter(Boolean));
-  if (board.filter(Boolean).length !== 5) resetRiverSolver("Board 5枚で有効");
-  if (board.filter(Boolean).length !== 4) resetTurnSolver("Board 4枚で有効");
-  if (board.filter(Boolean).length !== 3) resetFlopSolver("Board 3枚で有効");
+  renderPrecomputedReference(knownBoard);
+  if (knownBoard.length !== 5) resetRiverSolver("Board 5枚で有効");
+  if (knownBoard.length !== 4) resetTurnSolver("Board 4枚で有効");
+  if (knownBoard.length !== 3) resetFlopSolver("Board 3枚で有効");
+}
+
+function streetLabel(boardCount) {
+  if (boardCount === 0) return "No board";
+  if (boardCount === 3) return "Flop";
+  if (boardCount === 4) return "Turn";
+  if (boardCount === 5) return "River";
+  return `${boardCount} cards`;
 }
 
 function invalidateSolverCache() {

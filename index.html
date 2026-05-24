@@ -18,6 +18,10 @@
 
       <section class="solver-summary" aria-label="Solver configuration">
         <div>
+          <span>Street</span>
+          <strong id="streetSummary">No board</strong>
+        </div>
+        <div>
           <span>Mode</span>
           <strong>Approx EV</strong>
         </div>
@@ -35,8 +39,18 @@
         </div>
       </section>
 
+      <nav class="view-nav" aria-label="Workspace sections">
+        <a href="#setupPanel">Setup</a>
+        <a href="#tablePanel">Table</a>
+        <a href="#resultsPanel">Results</a>
+        <a href="#rangePanel">Range</a>
+        <a href="#flopPanel">Flop</a>
+        <a href="#turnPanel">Turn</a>
+        <a href="#riverPanel">River</a>
+      </nav>
+
       <section class="workspace">
-        <aside class="panel controls" aria-label="Inputs">
+        <aside id="setupPanel" class="panel controls" aria-label="Inputs">
           <div class="section-title">Solver Setup</div>
 
           <label class="field">
@@ -93,7 +107,7 @@
           <button id="clearCards" class="ghost">Clear spot</button>
         </aside>
 
-        <section class="panel table-area" aria-label="Poker table">
+        <section id="tablePanel" class="panel table-area" aria-label="Poker table">
           <div class="felt">
             <div class="seat villain">
               <span>Villain</span>
@@ -111,7 +125,7 @@
           </div>
         </section>
 
-        <aside class="panel results" aria-label="Results">
+        <aside id="resultsPanel" class="panel results" aria-label="Results">
           <div class="section-heading">
             <div class="section-title">Strategy Output</div>
             <span class="source-badge">Approx EV</span>
@@ -207,7 +221,7 @@
         </aside>
       </section>
 
-      <section class="panel matrix-panel">
+      <section id="rangePanel" class="panel matrix-panel">
         <div class="matrix-head">
           <div>
             <div class="section-title">Range Builder</div>
@@ -242,7 +256,7 @@
         <div id="rangeMatrix" class="range-matrix"></div>
       </section>
 
-      <section class="panel river-panel">
+      <section id="riverPanel" class="panel river-panel">
         <div class="matrix-head">
           <div>
             <div class="section-heading">
@@ -306,7 +320,7 @@
         </div>
       </section>
 
-      <section class="panel turn-panel">
+      <section id="turnPanel" class="panel turn-panel">
         <div class="matrix-head">
           <div>
             <div class="section-heading">
@@ -387,7 +401,7 @@
         </div>
       </section>
 
-      <section class="panel flop-panel">
+      <section id="flopPanel" class="panel flop-panel">
         <div class="matrix-head">
           <div>
             <div class="section-heading">

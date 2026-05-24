@@ -143,3 +143,38 @@ test("shows flop solver lite texture and turn samples", async ({ page }) => {
   await expect(page.locator("#riverStatus")).toHaveText("Board 5枚で有効");
   expect(pageErrors).toEqual([]);
 });
+
+test("keeps the solver workspace usable on mobile width", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?testMode=1");
+
+  await expect(page.getByRole("navigation", { name: "Workspace sections" })).toBeVisible();
+  await expect(page.locator("#streetSummary")).toHaveText("No board");
+  await expect(page.locator("#setupPanel")).toBeVisible();
+  await expect(page.locator("#tablePanel")).toBeVisible();
+  await expect(page.locator("#resultsPanel")).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    bodyScrollWidth: document.body.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    setupWidth: Math.ceil(document.querySelector("#setupPanel").getBoundingClientRect().width),
+    tableWidth: Math.ceil(document.querySelector("#tablePanel").getBoundingClientRect().width),
+    resultsWidth: Math.ceil(document.querySelector("#resultsPanel").getBoundingClientRect().width),
+    rangeMatrixWidth: Math.ceil(document.querySelector("#rangeMatrix").getBoundingClientRect().width),
+  }));
+
+  expect(layout.bodyScrollWidth).toBeLessThanOrEqual(layout.clientWidth);
+  expect(layout.setupWidth).toBeLessThanOrEqual(layout.clientWidth);
+  expect(layout.tableWidth).toBeLessThanOrEqual(layout.clientWidth);
+  expect(layout.resultsWidth).toBeLessThanOrEqual(layout.clientWidth);
+  expect(layout.rangeMatrixWidth).toBeLessThanOrEqual(layout.clientWidth);
+
+  await page.locator("#board-0").selectOption("Ah");
+  await page.locator("#board-1").selectOption("8d");
+  await page.locator("#board-2").selectOption("4c");
+  await expect(page.locator("#streetSummary")).toHaveText("Flop");
+
+  expect(pageErrors).toEqual([]);
+});
