@@ -13,7 +13,6 @@ const {
   RANGE_LABELS: rangeLabels,
   RANGE_STEPS: rangeSteps,
   comboCountFor,
-  compactRangeKey,
   handCode,
   makePresetRange,
   rangeCombos,
@@ -38,9 +37,12 @@ const solverSettings = {
   flopTurnLimit: new URLSearchParams(window.location.search).get("testMode") === "1" ? 4 : 8,
   version: "river-v1",
 };
-const solverCache = new Map();
-const pendingRiverSolves = new Map();
-const riverWorker = createRiverWorker();
+const solverCache = window.PokerGtoSolverCache.createSolverCache(solveRiverSpot);
+const solverClient = window.PokerGtoSolverClient.createSolverClient({
+  localRiverCandidates: solveRiverCandidatesLocally,
+  localTurnRunouts: solveTurnRunoutsLocally,
+  workerUrl: "./solver.worker.js",
+});
 const precomputedStore = window.PokerGtoPrecomputedStore.createSqlitePrecomputedStore("./data/precomputed_spots.sqlite");
 let riverRequestId = 0;
 let turnRequestId = 0;
@@ -789,35 +791,6 @@ async function renderTurnSolverAsync(board, deadCards, requestId) {
   renderTurnRunoutRows(results);
 }
 
-function createRiverWorker() {
-  if (!("Worker" in window)) return null;
-
-  try {
-    const worker = new Worker("./solver.worker.js");
-    worker.onmessage = (event) => {
-      const { id, type, results, cacheHits, runoutCount, message } = event.data || {};
-      const pending = pendingRiverSolves.get(id);
-      if (!pending) return;
-
-      pendingRiverSolves.delete(id);
-      if (type === "river-error") {
-        pending.reject(new Error(message || "Worker solver failed"));
-        return;
-      }
-
-      pending.resolve({ results, cacheHits, runoutCount });
-    };
-    worker.onerror = (error) => {
-      pendingRiverSolves.forEach(({ reject }) => reject(error));
-      pendingRiverSolves.clear();
-    };
-    return worker;
-  } catch (error) {
-    console.warn("River solver worker unavailable; falling back to main thread.", error);
-    return null;
-  }
-}
-
 function solveRiverCandidates({ board, pot, stack }) {
   const payload = {
     board,
@@ -830,8 +803,7 @@ function solveRiverCandidates({ board, pot, stack }) {
     version: solverSettings.version,
   };
 
-  if (riverWorker) return solveRiverCandidatesWithWorker(payload);
-  return Promise.resolve(solveRiverCandidatesLocally(payload));
+  return solverClient.solveRiverCandidates(payload, riverRequestId);
 }
 
 function solveTurnRunouts({ board, deadCards, pot, stack }) {
@@ -848,24 +820,7 @@ function solveTurnRunouts({ board, deadCards, pot, stack }) {
     version: solverSettings.version,
   };
 
-  if (riverWorker) return solveTurnRunoutsWithWorker(payload);
-  return Promise.resolve(solveTurnRunoutsLocally(payload));
-}
-
-function solveRiverCandidatesWithWorker(payload) {
-  const id = riverRequestId;
-  return new Promise((resolve, reject) => {
-    pendingRiverSolves.set(id, { resolve, reject });
-    riverWorker.postMessage({ id, payload, type: "solve-river" });
-  });
-}
-
-function solveTurnRunoutsWithWorker(payload) {
-  const id = turnRequestId;
-  return new Promise((resolve, reject) => {
-    pendingRiverSolves.set(id, { resolve, reject });
-    riverWorker.postMessage({ id, payload, type: "solve-turn" });
-  });
+  return solverClient.solveTurnRunouts(payload, turnRequestId);
 }
 
 function solveRiverCandidatesLocally(payload) {
@@ -922,33 +877,7 @@ function solveTurnRunoutsLocally(payload) {
 }
 
 function solveRiverSpotCached(input) {
-  const key = solverCacheKey(input);
-  if (solverCache.has(key)) return { result: solverCache.get(key), cacheHit: true };
-  const result = solveRiverSpot(input);
-  if (result) solverCache.set(key, result);
-  return { result, cacheHit: false };
-}
-
-function solverCacheKey({
-  board,
-  pot,
-  betSize,
-  iterations = solverSettings.iterations,
-  comboLimit = solverSettings.comboLimit,
-  version = solverSettings.version,
-  oopRange = rangeState.oop,
-  ipRange = rangeState.ip,
-}) {
-  return JSON.stringify({
-    version,
-    board: board.slice().sort(),
-    pot,
-    betSize,
-    iterations,
-    comboLimit,
-    oop: compactRangeKey(oopRange),
-    ip: compactRangeKey(ipRange),
-  });
+  return solverCache.solve(input);
 }
 
 function resetRiverSolver(status) {
