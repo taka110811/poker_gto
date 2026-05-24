@@ -22,4 +22,4 @@ python3 -m http.server 4173
 
 これは厳密なGTOソルバーではありません。CFRなどでゲーム木を解く代わりに、GTO学習用の近似ロジックとして実装しています。
 
-詳しい現状機能と境界は [docs/current-feature-scope.md](docs/current-feature-scope.md) を参照してください。
+詳しい現状機能、UI構成、実装の境界、現在のUI課題は [docs/current-feature-scope.md](docs/current-feature-scope.md) を参照してください。
