@@ -107,6 +107,10 @@ const els = {
   flopOopScore: document.querySelector("#flopOopScore"),
   flopIpScore: document.querySelector("#flopIpScore"),
   flopRangeAdvantage: document.querySelector("#flopRangeAdvantage"),
+  flopOopCbet: document.querySelector("#flopOopCbet"),
+  flopOopCheck: document.querySelector("#flopOopCheck"),
+  flopIpContinue: document.querySelector("#flopIpContinue"),
+  flopRunoutVolatility: document.querySelector("#flopRunoutVolatility"),
   flopTurnSamples: document.querySelector("#flopTurnSamples"),
   flopAccuracy: document.querySelector("#flopAccuracy"),
   flopTurnRows: document.querySelector("#flopTurnRows"),
@@ -805,14 +809,20 @@ function renderFlopSolver(board, deadCards) {
       turnCard,
     };
   });
+  const mix = flopStrategyMix(oopScore, ipScore, board);
+  const volatility = runoutVolatility(turnRows);
 
   els.flopStatus.textContent = `${turnCards.length} turn samples / ${solverSettings.flopComboLimit} combo cap`;
   els.flopTexture.textContent = flopBoardTexture(board);
   els.flopOopScore.textContent = oopScore.toFixed(2);
   els.flopIpScore.textContent = ipScore.toFixed(2);
   els.flopRangeAdvantage.textContent = rangeAdvantageLabel(oopScore, ipScore);
+  els.flopOopCbet.textContent = pct(mix.oopCbet);
+  els.flopOopCheck.textContent = pct(1 - mix.oopCbet);
+  els.flopIpContinue.textContent = pct(mix.ipContinue);
+  els.flopRunoutVolatility.textContent = `${volatility.label} ${volatility.score.toFixed(2)}`;
   els.flopTurnSamples.textContent = String(turnCards.length);
-  els.flopAccuracy.textContent = `Lite: texture scan, ${solverSettings.flopTurnLimit} turn cap, ${solverSettings.flopComboLimit} combo cap`;
+  els.flopAccuracy.textContent = `Lite: heuristic strategy, ${solverSettings.flopTurnLimit} turn cap, ${solverSettings.flopComboLimit} combo cap`;
   renderFlopTurnRows(turnRows);
 }
 
@@ -1126,6 +1136,10 @@ function resetFlopSolver(status) {
     els.flopOopScore,
     els.flopIpScore,
     els.flopRangeAdvantage,
+    els.flopOopCbet,
+    els.flopOopCheck,
+    els.flopIpContinue,
+    els.flopRunoutVolatility,
     els.flopTurnSamples,
     els.flopAccuracy,
   ].forEach((el) => {
@@ -1245,6 +1259,25 @@ function rangeAdvantageLabel(oopScore, ipScore) {
   const diff = oopScore - ipScore;
   if (Math.abs(diff) < 0.08) return "Neutral";
   return diff > 0 ? "OOP" : "IP";
+}
+
+function flopStrategyMix(oopScore, ipScore, board) {
+  const advantage = clamp((oopScore - ipScore) * 0.18, -0.18, 0.18);
+  const texture = flopBoardTexture(board);
+  const textureAdjustment = texture.includes("dry") ? 0.1 : texture.includes("connected") ? -0.08 : -0.04;
+  const oopCbet = clamp(0.52 + advantage + textureAdjustment, 0.22, 0.82);
+  const ipContinue = clamp(0.58 - advantage + (texture.includes("connected") ? 0.08 : 0), 0.28, 0.88);
+  return { ipContinue, oopCbet };
+}
+
+function runoutVolatility(rows) {
+  if (rows.length <= 1) return { label: "Low", score: 0 };
+  const diffs = rows.map((row) => row.oopScore - row.ipScore);
+  const average = diffs.reduce((sum, diff) => sum + diff, 0) / diffs.length;
+  const variance = diffs.reduce((sum, diff) => sum + (diff - average) ** 2, 0) / diffs.length;
+  const score = Math.sqrt(variance);
+  const label = score >= 0.35 ? "High" : score >= 0.18 ? "Medium" : "Low";
+  return { label, score };
 }
 
 function renderFlopTurnRows(rows) {

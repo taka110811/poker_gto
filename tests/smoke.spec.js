@@ -132,8 +132,12 @@ test("shows flop solver lite texture and turn samples", async ({ page }) => {
   await expect(page.locator("#flopOopScore")).not.toHaveText("--");
   await expect(page.locator("#flopIpScore")).not.toHaveText("--");
   await expect(page.locator("#flopRangeAdvantage")).not.toHaveText("--");
+  await expect(page.locator("#flopOopCbet")).not.toHaveText("--");
+  await expect(page.locator("#flopOopCheck")).not.toHaveText("--");
+  await expect(page.locator("#flopIpContinue")).not.toHaveText("--");
+  await expect(page.locator("#flopRunoutVolatility")).not.toHaveText("--");
   await expect(page.locator("#flopTurnSamples")).toHaveText("4");
-  await expect(page.locator("#flopAccuracy")).toHaveText("Lite: texture scan, 4 turn cap, 24 combo cap");
+  await expect(page.locator("#flopAccuracy")).toHaveText("Lite: heuristic strategy, 4 turn cap, 24 combo cap");
   await expect(page.locator("#flopTurnRows tr")).toHaveCount(4);
   await expect(page.locator("#turnStatus")).toHaveText("Board 4枚で有効");
   await expect(page.locator("#riverStatus")).toHaveText("Board 5枚で有効");
