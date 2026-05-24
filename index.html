@@ -349,9 +349,23 @@
         </div>
 
         <div class="bet-tree">
-          <span>Bet size candidates</span>
+          <div class="bet-tree-head">
+            <span>Bet size candidates</span>
+            <strong id="betTreeKey">river-no-raise-33-75</strong>
+          </div>
+          <div class="bet-tree-summary" aria-label="Bet tree summary">
+            <div>
+              <span>Selected sizes</span>
+              <strong id="betTreeSelected">33% pot / 75% pot</strong>
+            </div>
+            <div>
+              <span>Bet amounts</span>
+              <strong id="betTreeAmounts">--</strong>
+            </div>
+          </div>
           <div class="size-buttons" role="group" aria-label="Bet size candidates">
             <button class="size-button active" type="button" data-size="0.33">33% pot</button>
+            <button class="size-button" type="button" data-size="0.5">50% pot</button>
             <button class="size-button active" type="button" data-size="0.75">75% pot</button>
             <button class="size-button" type="button" data-size="1.25">125% pot</button>
             <button class="size-button" type="button" data-size="allin">All-in</button>

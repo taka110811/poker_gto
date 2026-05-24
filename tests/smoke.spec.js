@@ -61,6 +61,13 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await page.locator("#board-3").selectOption("2h");
   await page.locator("#board-4").selectOption("7s");
   await expect(page.getByRole("button", { name: "75% pot" })).toBeVisible();
+  await expect(page.locator("#betTreeKey")).toHaveText("river-no-raise-33-75");
+  await expect(page.locator("#betTreeAmounts")).toContainText("33% pot 4.0bb");
+  await expect(page.locator("#betTreeAmounts")).toContainText("75% pot 9.0bb");
+  await page.getByRole("button", { name: "50% pot" }).click();
+  await expect(page.locator("#riverStatus")).toHaveText("Solveで再計算");
+  await expect(page.locator("#betTreeKey")).toHaveText("river-no-raise-33-50-75");
+  await expect(page.locator("#betTreeAmounts")).toContainText("50% pot 6.0bb");
   await page.getByRole("button", { name: "125% pot" }).click();
   await page.getByRole("button", { name: "Solve Spot" }).click();
 
@@ -69,6 +76,7 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#oopBetFreq")).not.toHaveText("--", { timeout: 10000 });
   await expect(page.locator("#ipCallFreq")).not.toHaveText("--");
   await expect(page.locator("#sizeResults")).toContainText("33% pot");
+  await expect(page.locator("#sizeResults")).toContainText("50% pot");
   await expect(page.locator("#sizeResults")).toContainText("125% pot");
   await expect(page.locator("#precomputedStatus")).toContainText("Approx");
   await expect(page.locator("#precomputedRecord")).toContainText("btn-bb-srp-river");
