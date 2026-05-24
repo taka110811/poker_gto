@@ -222,6 +222,17 @@ p {
   margin-bottom: 14px;
 }
 
+.spot-browser .section-heading {
+  margin-bottom: 8px;
+}
+
+.spot-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 .spot-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -889,6 +900,10 @@ button {
 
   .spot-card {
     flex: 0 0 172px;
+  }
+
+  .spot-filters {
+    grid-template-columns: 1fr;
   }
 
   .primary {

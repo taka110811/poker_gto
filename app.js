@@ -31,6 +31,10 @@ const rangeState = {
   oop: {},
   ip: {},
 };
+const spotFilterState = {
+  street: "all",
+  texture: "all",
+};
 const betTreeState = {
   activeSizes: new Set(["0.33", "0.75"]),
 };
@@ -53,7 +57,10 @@ let solverRequestId = 0;
 
 const els = {
   spotPreset: document.querySelector("#spotPreset"),
+  spotBrowserCount: document.querySelector("#spotBrowserCount"),
   spotCards: document.querySelector("#spotCards"),
+  spotStreetFilter: document.querySelector("#spotStreetFilter"),
+  spotTextureFilter: document.querySelector("#spotTextureFilter"),
   position: document.querySelector("#position"),
   villainRange: document.querySelector("#villainRange"),
   pot: document.querySelector("#pot"),
@@ -306,6 +313,30 @@ function renderSpotPresetOptions() {
     option.textContent = preset.name;
     els.spotPreset.appendChild(option);
   });
+}
+
+function spotTextureCategory(texture) {
+  const value = texture.toLowerCase();
+  if (value.includes("monotone")) return "monotone";
+  if (value.includes("paired") || value.includes("pairing")) return "paired";
+  if (value.includes("flush")) return "flush";
+  if (value.includes("connected") || value.includes("wet")) return "connected";
+  if (value.includes("dry") || value.includes("brick") || value.includes("blank")) return "dry";
+  return "wet";
+}
+
+function spotMatchesFilters(preset) {
+  const streetMatches = spotFilterState.street === "all" || preset.street === spotFilterState.street;
+  const textureMatches =
+    spotFilterState.texture === "all" || spotTextureCategory(preset.texture) === spotFilterState.texture;
+  return streetMatches && textureMatches;
+}
+
+function spotBrowserCountLabel(count) {
+  if (spotFilterState.street !== "all" && spotFilterState.texture === "all") {
+    return `${count} ${spotFilterState.street} spots`;
+  }
+  return `${count} spots`;
 }
 
 async function loadSpotPresets() {
@@ -1680,7 +1711,9 @@ function applySpotPreset(presetKey) {
 function renderSpotCards() {
   els.spotCards.innerHTML = "";
   if (!Object.keys(spotPresets).length) return;
-  Object.entries(spotPresets).forEach(([key, preset]) => {
+  const filteredPresets = Object.entries(spotPresets).filter(([, preset]) => spotMatchesFilters(preset));
+  els.spotBrowserCount.textContent = spotBrowserCountLabel(filteredPresets.length);
+  filteredPresets.forEach(([key, preset]) => {
     const button = document.createElement("button");
     button.className = "spot-card";
     button.type = "button";
@@ -1698,6 +1731,12 @@ function renderSpotCards() {
     els.spotCards.appendChild(button);
   });
   updateSpotCards();
+}
+
+function updateSpotFilters() {
+  spotFilterState.street = els.spotStreetFilter.value;
+  spotFilterState.texture = els.spotTextureFilter.value;
+  renderSpotCards();
 }
 
 function init() {
@@ -1718,6 +1757,8 @@ function init() {
     });
   });
   els.spotPreset.addEventListener("change", () => applySpotPreset(els.spotPreset.value));
+  els.spotStreetFilter.addEventListener("change", updateSpotFilters);
+  els.spotTextureFilter.addEventListener("change", updateSpotFilters);
   els.oopRangeTab.addEventListener("click", () => setActiveRange("oop"));
   els.ipRangeTab.addEventListener("click", () => setActiveRange("ip"));
   els.oopPreset.addEventListener("change", () => applyPreset("oop", els.oopPreset.value));
