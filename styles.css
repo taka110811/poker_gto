@@ -642,6 +642,34 @@ button {
   font-size: 16px;
 }
 
+.range-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.range-metrics div {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #12181c;
+}
+
+.range-metrics span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.range-metrics strong {
+  font-size: 18px;
+}
+
 .range-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -678,6 +706,28 @@ button {
   display: none;
 }
 
+.range-frequency-palette {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.frequency-button {
+  min-height: 36px;
+  border-color: var(--line);
+  background: #11161a;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.frequency-button.active {
+  border-color: rgba(43, 191, 132, 0.8);
+  background: var(--green-2);
+  color: #07120d;
+}
+
 .range-scale {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -710,6 +760,7 @@ button {
   place-items: center;
   gap: 2px;
   aspect-ratio: 1;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: #12181c;
@@ -717,6 +768,8 @@ button {
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
 }
 
 .range-cell.in-range {
@@ -979,6 +1032,16 @@ button {
 
   .range-overview {
     grid-template-columns: 1fr;
+  }
+
+  .range-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .range-frequency-palette {
+    grid-template-columns: repeat(5, 52px);
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 
   .range-matrix {

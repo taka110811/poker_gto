@@ -56,6 +56,11 @@ test("ranges domain builds range presets and combo helpers", () => {
   assert.equal(tight["72o"], 0);
 
   assert.equal(PokerGtoRanges.compactRangeKey({ AKo: 0.5, AA: 1, KQo: 0 }), "AA:1,AKo:0.5");
+  assert.deepEqual(plain(PokerGtoRanges.rangeSummary({ AA: 1, AKs: 0.5, KQo: 0 })), {
+    activeHands: 2,
+    averageFrequency: 0.75,
+    combos: 8,
+  });
 
   const combos = PokerGtoRanges.rangeCombos({ AA: 1, AKs: 0.5 }, ["As", "Kd", "7c", "2h", "9d"], 10);
   assert.ok(combos.length > 0);

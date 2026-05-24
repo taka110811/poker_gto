@@ -11,10 +11,9 @@ const {
 } = window.PokerGtoCards;
 const {
   RANGE_LABELS: rangeLabels,
-  RANGE_STEPS: rangeSteps,
-  comboCountFor,
   handCode,
   makePresetRange,
+  rangeSummary,
   rangeCombos,
 } = window.PokerGtoRanges;
 const { precomputedQuery } = window.PokerGtoSpots;
@@ -24,6 +23,8 @@ const rangeState = {
   editorOpen: false,
   oop: {},
   ip: {},
+  painting: false,
+  selectedFrequency: 1,
 };
 const betTreeState = {
   activeSizes: new Set(["0.33", "0.75"]),
@@ -73,6 +74,10 @@ const els = {
   rangeEditor: document.querySelector("#rangeEditor"),
   rangeFeedback: document.querySelector("#rangeFeedback"),
   rangeSummary: document.querySelector("#rangeSummary"),
+  rangeComboDetail: document.querySelector("#rangeComboDetail"),
+  rangeActiveHands: document.querySelector("#rangeActiveHands"),
+  rangeAverageFreq: document.querySelector("#rangeAverageFreq"),
+  rangeFrequencyButtons: document.querySelectorAll(".frequency-button"),
   toggleRangeEditor: document.querySelector("#toggleRangeEditor"),
   oopRangeTab: document.querySelector("#oopRangeTab"),
   ipRangeTab: document.querySelector("#ipRangeTab"),
@@ -262,8 +267,6 @@ function renderMatrix() {
   const activeRange = rangeState[rangeState.activeSide];
 
   els.rangeMatrix.innerHTML = "";
-  let comboCount = 0;
-  let activeHands = 0;
   ranks.forEach((rowRank, row) => {
     ranks.forEach((colRank, col) => {
       const code =
@@ -275,36 +278,71 @@ function renderMatrix() {
       const cell = document.createElement("div");
       cell.className = "range-cell";
       const frequency = activeRange[code] || 0;
-      cell.classList.add(`freq-${Math.round(frequency * 100)}`);
-      if (frequency > 0) {
-        cell.classList.add("in-range");
-        cell.style.opacity = String(0.35 + frequency * 0.65);
-        comboCount += comboCountFor(code) * frequency;
-        activeHands += 1;
-      }
       if (code === heroHand) cell.classList.add("hero-hand");
       cell.dataset.code = code;
-      cell.setAttribute("aria-label", `${code} ${Math.round(frequency * 100)}%`);
-      cell.title = `${code}: ${Math.round(frequency * 100)}%`;
-      cell.innerHTML = `${code}<small>${Math.round(frequency * 100)}%</small>`;
-      cell.addEventListener("click", () => cycleRangeFrequency(code));
+      updateRangeCell(cell, code, frequency);
+      cell.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        rangeState.painting = true;
+        paintRangeFrequency(code, { cell });
+      });
+      cell.addEventListener("pointerenter", () => {
+        if (rangeState.painting) paintRangeFrequency(code, { cell, quiet: true });
+      });
       els.rangeMatrix.appendChild(cell);
     });
   });
-  const sideLabel = rangeState.activeSide.toUpperCase();
-  els.comboCount.textContent = `${sideLabel} ${comboCount.toFixed(0)} combos`;
-  els.rangeSummary.textContent = `${sideLabel} Range / ${activeHands} hands`;
+  renderRangeSummary(activeRange);
 }
 
-function cycleRangeFrequency(code) {
+function updateRangeCell(cell, code, frequency) {
+  cell.classList.remove("in-range", "freq-0", "freq-25", "freq-50", "freq-75", "freq-100");
+  cell.classList.add(`freq-${Math.round(frequency * 100)}`);
+  cell.style.opacity = "";
+  if (frequency > 0) {
+    cell.classList.add("in-range");
+    cell.style.opacity = String(0.35 + frequency * 0.65);
+  }
+  cell.setAttribute("aria-label", `${code} ${Math.round(frequency * 100)}%`);
+  cell.title = `${code}: ${Math.round(frequency * 100)}%`;
+  cell.innerHTML = `${code}<small>${Math.round(frequency * 100)}%</small>`;
+}
+
+function renderRangeSummary(activeRange) {
+  const sideLabel = rangeState.activeSide.toUpperCase();
+  const summary = rangeSummary(activeRange);
+  els.comboCount.textContent = `${sideLabel} ${summary.combos.toFixed(0)} combos`;
+  els.rangeSummary.textContent = `${sideLabel} Range / ${summary.activeHands} hands`;
+  els.rangeComboDetail.textContent = summary.combos.toFixed(0);
+  els.rangeActiveHands.textContent = String(summary.activeHands);
+  els.rangeAverageFreq.textContent = pct(summary.averageFrequency);
+}
+
+function paintRangeFrequency(code, options = {}) {
   const range = rangeState[rangeState.activeSide];
-  const current = range[code] || 0;
-  const nextIndex = (rangeSteps.indexOf(current) + 1) % rangeSteps.length;
-  range[code] = rangeSteps[nextIndex];
+  const frequency = rangeState.selectedFrequency;
+  if ((range[code] || 0) === frequency) return;
+  range[code] = frequency;
   invalidateSolverCache();
-  renderMatrix();
-  setRangeFeedback(`${rangeState.activeSide.toUpperCase()} ${code} を ${Math.round(range[code] * 100)}% に変更`);
+  if (options.cell) updateRangeCell(options.cell, code, frequency);
+  renderRangeSummary(range);
+  if (!options.quiet) {
+    setRangeFeedback(`${rangeState.activeSide.toUpperCase()} ${code} を ${Math.round(frequency * 100)}% に変更`);
+  }
   resetRiverSolver("Solveで再計算");
+}
+
+function setRangeFrequency(frequency) {
+  rangeState.selectedFrequency = frequency;
+  renderRangeFrequencyPalette();
+  setRangeFeedback(`${rangeState.activeSide.toUpperCase()} ${Math.round(frequency * 100)}% を選択`);
+}
+
+function renderRangeFrequencyPalette() {
+  els.rangeFrequencyButtons.forEach((button) => {
+    const frequency = Number(button.dataset.frequency);
+    button.classList.toggle("active", frequency === rangeState.selectedFrequency);
+  });
 }
 
 function setRangeFeedback(message) {
@@ -354,6 +392,7 @@ function setActiveRange(side) {
   els.oopRangeTab.classList.toggle("active", side === "oop");
   els.ipRangeTab.classList.toggle("active", side === "ip");
   renderMatrix();
+  renderRangeFrequencyPalette();
   setRangeFeedback(`${side.toUpperCase()} Range を編集中`);
 }
 
@@ -1312,6 +1351,12 @@ function init() {
   });
   els.oopRangeTab.addEventListener("click", () => setActiveRange("oop"));
   els.ipRangeTab.addEventListener("click", () => setActiveRange("ip"));
+  els.rangeFrequencyButtons.forEach((button) => {
+    button.addEventListener("click", () => setRangeFrequency(Number(button.dataset.frequency)));
+  });
+  window.addEventListener("pointerup", () => {
+    rangeState.painting = false;
+  });
   els.oopPreset.addEventListener("change", () => applyPreset("oop", els.oopPreset.value));
   els.ipPreset.addEventListener("change", () => {
     applyPreset("ip", els.ipPreset.value);
@@ -1332,6 +1377,7 @@ function init() {
   rangeState.oop = makePresetRange(els.oopPreset.value);
   rangeState.ip = makePresetRange(els.ipPreset.value);
   renderRangeEditorToggle();
+  renderRangeFrequencyPalette();
   renderBetSizeButtons();
   void loadSpotPresets();
   void loadPrecomputedSpots();
