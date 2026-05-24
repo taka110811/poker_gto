@@ -73,6 +73,7 @@ test("spots domain creates stable bet tree keys and precomputed queries", () => 
 
   const activeSizes = new Set(["0.75", "allin", "0.33"]);
   assert.equal(PokerGtoSpots.betTreeKey(activeSizes), "river-no-raise-33-75-allin");
+  assert.equal(PokerGtoSpots.betTreeKey(new Set(["1.25", "0.5", "0.33"])), "river-no-raise-33-50-125");
   assert.deepEqual(
     plain(
       PokerGtoSpots.precomputedQuery({

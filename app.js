@@ -16,7 +16,7 @@ const {
   rangeSummary,
   rangeCombos,
 } = window.PokerGtoRanges;
-const { precomputedQuery } = window.PokerGtoSpots;
+const { betTreeKey, precomputedQuery } = window.PokerGtoSpots;
 let spotPresets = {};
 const rangeState = {
   activeSide: "oop",
@@ -103,6 +103,9 @@ const els = {
   ipProbeFreq: document.querySelector("#ipProbeFreq"),
   oopCallFreq: document.querySelector("#oopCallFreq"),
   riverEv: document.querySelector("#riverEv"),
+  betTreeKey: document.querySelector("#betTreeKey"),
+  betTreeSelected: document.querySelector("#betTreeSelected"),
+  betTreeAmounts: document.querySelector("#betTreeAmounts"),
   turnStatus: document.querySelector("#turnStatus"),
   turnRunouts: document.querySelector("#turnRunouts"),
   turnOopBetFreq: document.querySelector("#turnOopBetFreq"),
@@ -367,14 +370,24 @@ function toggleBetSize(size) {
   } else {
     betTreeState.activeSizes.add(size);
   }
+  invalidateSolverCache();
   renderBetSizeButtons();
   resetRiverSolver("Solveで再計算");
 }
 
 function renderBetSizeButtons() {
+  const pot = Number(els.pot.value || 0);
+  const stack = Number(els.stack.value || 0);
+  const selected = selectedBetSizes(pot, stack);
   els.sizeButtons.forEach((button) => {
-    button.classList.toggle("active", betTreeState.activeSizes.has(button.dataset.size));
+    const active = betTreeState.activeSizes.has(button.dataset.size);
+    const size = betSizeOption(button.dataset.size, pot, stack);
+    button.classList.toggle("active", active);
+    button.innerHTML = `${size.label}<small>${size.amount.toFixed(1)}bb</small>`;
   });
+  els.betTreeKey.textContent = betTreeKey(betTreeState.activeSizes);
+  els.betTreeSelected.textContent = selected.map((size) => size.label).join(" / ");
+  els.betTreeAmounts.textContent = selected.map((size) => `${size.label} ${size.amount.toFixed(1)}bb`).join(" / ");
 }
 
 function applyPreset(side, presetName) {
@@ -982,16 +995,18 @@ function flopTurnCards(deadCards, limit) {
 
 function selectedBetSizes(pot, stack) {
   return [...betTreeState.activeSizes]
-    .map((size) => {
-      if (size === "allin") return { key: size, label: "All-in", amount: Math.max(1, stack) };
-      const ratio = Number(size);
-      return {
-        key: size,
-        label: `${Math.round(ratio * 100)}% pot`,
-        amount: Math.max(1, pot * ratio),
-      };
-    })
+    .map((size) => betSizeOption(size, pot, stack))
     .sort((a, b) => a.amount - b.amount);
+}
+
+function betSizeOption(size, pot, stack) {
+  if (size === "allin") return { key: size, label: "All-in", amount: Math.max(1, stack) };
+  const ratio = Number(size);
+  return {
+    key: size,
+    label: `${Math.round(ratio * 100)}% pot`,
+    amount: Math.max(1, pot * ratio),
+  };
 }
 
 function renderSizeResults(results, bestLabel) {
@@ -1340,12 +1355,14 @@ function init() {
       els.spotPreset.value = "";
       updateSpotCards();
       invalidateSolverCache();
+      renderBetSizeButtons();
       sync();
     });
     el.addEventListener("change", () => {
       els.spotPreset.value = "";
       updateSpotCards();
       invalidateSolverCache();
+      renderBetSizeButtons();
       sync();
     });
   });
