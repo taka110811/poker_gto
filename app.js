@@ -16,15 +16,16 @@ const rankValues = {
 };
 const suits = ["s", "h", "d", "c"];
 const suitSymbols = { s: "♠", h: "♥", d: "♦", c: "♣" };
-const rangePercentile = { tight: 0.18, standard: 0.3, wide: 0.45, any: 1 };
-const rangeLabels = {
-  tight: "Tight 18%",
-  standard: "Standard 30%",
-  wide: "Wide 45%",
-  any: "Any two",
-};
+const {
+  RANGE_LABELS: rangeLabels,
+  RANGE_STEPS: rangeSteps,
+  comboCountFor,
+  compactRangeKey,
+  handCode,
+  makePresetRange,
+  rangeCombos,
+} = window.PokerGtoRanges;
 let spotPresets = {};
-const rangeSteps = [0, 0.25, 0.5, 0.75, 1];
 const rangeState = {
   activeSide: "oop",
   editorOpen: false,
@@ -419,32 +420,6 @@ function renderBetSizeButtons() {
   });
 }
 
-function allStartingHands() {
-  const hands = [];
-  ranks.forEach((first, i) => {
-    ranks.forEach((second, j) => {
-      if (j < i) return;
-      if (i === j) {
-        hands.push({ code: `${first}${second}`, score: startingHandScore(`${first}s`, `${second}h`) });
-      } else {
-        hands.push({ code: `${first}${second}s`, score: startingHandScore(`${first}s`, `${second}s`) });
-        hands.push({ code: `${first}${second}o`, score: startingHandScore(`${first}s`, `${second}h`) - 2 });
-      }
-    });
-  });
-  return hands;
-}
-
-function makePresetRange(rangeName) {
-  const threshold = rangePercentile[rangeName];
-  const hands = allStartingHands().sort((a, b) => b.score - a.score);
-  const cutoff = Math.ceil(hands.length * threshold);
-  return hands.reduce((acc, hand, index) => {
-    acc[hand.code] = index < cutoff ? 1 : 0;
-    return acc;
-  }, {});
-}
-
 function applyPreset(side, presetName) {
   els.spotPreset.value = "";
   updateSpotCards();
@@ -461,35 +436,6 @@ function setActiveRange(side) {
   els.ipRangeTab.classList.toggle("active", side === "ip");
   renderMatrix();
   setRangeFeedback(`${side.toUpperCase()} Range を編集中`);
-}
-
-function comboCountFor(code) {
-  if (code.length === 2) return 6;
-  return code.endsWith("s") ? 4 : 12;
-}
-
-function handCode(a, b) {
-  const first = a[0];
-  const second = b[0];
-  if (first === second) return `${first}${second}`;
-  const ordered = [first, second].sort((x, y) => rankValues[y] - rankValues[x]);
-  return `${ordered[0]}${ordered[1]}${a[1] === b[1] ? "s" : "o"}`;
-}
-
-function startingHandScore(a, b) {
-  const high = Math.max(rankValues[a[0]], rankValues[b[0]]);
-  const low = Math.min(rankValues[a[0]], rankValues[b[0]]);
-  const pair = a[0] === b[0];
-  const suited = a[1] === b[1];
-  const gap = Math.max(0, high - low - 1);
-  let score = high * 2 + low;
-  if (pair) score += 35 + high;
-  if (suited) score += 5;
-  if (gap === 0) score += 4;
-  if (gap === 1) score += 2;
-  if (gap >= 4) score -= 5;
-  if (high >= 12 && low >= 10) score += 6;
-  return score;
 }
 
 function evaluateSeven(cards) {
@@ -1088,14 +1034,6 @@ function solverCacheKey({
   });
 }
 
-function compactRangeKey(range) {
-  return Object.keys(range)
-    .sort()
-    .filter((code) => range[code] > 0)
-    .map((code) => `${code}:${range[code]}`)
-    .join(",");
-}
-
 function resetRiverSolver(status) {
   els.riverStatus.textContent = status;
   [els.oopBetFreq, els.oopCheckFreq, els.ipCallFreq, els.ipProbeFreq, els.oopCallFreq, els.riverEv].forEach(
@@ -1335,23 +1273,6 @@ function solveRiverSpot({
     oopCombos: oopCombos.length,
     ipCombos: ipCombos.length,
   };
-}
-
-function rangeCombos(range, board, comboLimit = solverSettings.comboLimit) {
-  const blocked = new Set(board);
-  return choose(
-    deck().filter((card) => !blocked.has(card)),
-    2
-  )
-    .map((cards) => ({
-      cards,
-      frequency: range[handCode(cards[0], cards[1])] || 0,
-      key: cards.join(""),
-      score: startingHandScore(cards[0], cards[1]),
-    }))
-    .filter((combo) => combo.frequency > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, comboLimit);
 }
 
 function riverCfr(history, oop, ip, board, pot, betSize, infosets, oopReach, ipReach) {
