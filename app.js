@@ -62,6 +62,7 @@ const els = {
   boardDisplay: document.querySelector("#boardDisplay"),
   rangeLabel: document.querySelector("#rangeLabel"),
   potDisplay: document.querySelector("#potDisplay"),
+  setupStatus: document.querySelector("#setupStatus"),
   streetSummary: document.querySelector("#streetSummary"),
   rangeMatrix: document.querySelector("#rangeMatrix"),
   comboCount: document.querySelector("#comboCount"),
@@ -227,6 +228,7 @@ function sync() {
 
   els.potDisplay.textContent = Number(els.pot.value || 0).toFixed(0);
   els.streetSummary.textContent = streetLabel(knownBoard.length);
+  els.setupStatus.textContent = setupStatusLabel(hero, knownBoard, duplicates);
   els.rangeLabel.textContent = `IP ${rangeLabels[els.ipPreset.value]}`;
   renderCards(els.heroDisplay, hero.filter(Boolean), duplicates);
   renderCards(els.boardDisplay, knownBoard, duplicates);
@@ -235,6 +237,7 @@ function sync() {
   if (knownBoard.length !== 5) resetRiverSolver("Board 5枚で有効");
   if (knownBoard.length !== 4) resetTurnSolver("Board 4枚で有効");
   if (knownBoard.length !== 3) resetFlopSolver("Board 3枚で有効");
+  updateStreetPanels(knownBoard.length);
 }
 
 function streetLabel(boardCount) {
@@ -243,6 +246,40 @@ function streetLabel(boardCount) {
   if (boardCount === 4) return "Turn";
   if (boardCount === 5) return "River";
   return `${boardCount} cards`;
+}
+
+function setupStatusLabel(hero, board, duplicates) {
+  const heroCount = hero.filter(Boolean).length;
+  if (duplicates.size > 0) return "カード重複";
+  if (heroCount < 2) return `Hero ${heroCount}/2`;
+  if (board.length === 3) return "Flop計算可能";
+  if (board.length === 4) return "Turn計算可能";
+  if (board.length === 5) return "River計算可能";
+  return `Board ${board.length}/3+`;
+}
+
+function activeStreetKey(boardCount) {
+  if (boardCount === 3) return "flop";
+  if (boardCount === 4) return "turn";
+  if (boardCount === 5) return "river";
+  return "";
+}
+
+function updateStreetPanels(boardCount) {
+  const activeStreet = activeStreetKey(boardCount);
+  document.querySelectorAll("[data-street-panel]").forEach((panel) => {
+    const active = panel.dataset.streetPanel === activeStreet;
+    panel.classList.toggle("is-active", active);
+    panel.classList.toggle("is-inactive", !active);
+  });
+  document.querySelectorAll(".view-nav a").forEach((link) => {
+    const target = link.getAttribute("href") || "";
+    const active =
+      (activeStreet === "flop" && target === "#flopPanel") ||
+      (activeStreet === "turn" && target === "#turnPanel") ||
+      (activeStreet === "river" && target === "#riverPanel");
+    link.classList.toggle("active", active);
+  });
 }
 
 function invalidateSolverCache() {
@@ -523,6 +560,19 @@ function simulate() {
   renderTurnSolver(board.filter(Boolean), all);
   renderFlopSolver(board.filter(Boolean), all);
   renderPrecomputedReference(board.filter(Boolean));
+  scrollToSolveResult(board.filter(Boolean).length);
+}
+
+function scrollToSolveResult(boardCount) {
+  const activeStreet = activeStreetKey(boardCount);
+  const target =
+    document.querySelector(`[data-street-panel="${activeStreet}"]`) ||
+    document.querySelector("#resultsPanel");
+  const testMode = new URLSearchParams(window.location.search).get("testMode") === "1";
+  window.setTimeout(() => {
+    const top = target.getBoundingClientRect().top + window.scrollY - 8;
+    window.scrollTo({ top, behavior: testMode ? "auto" : "smooth" });
+  }, 0);
 }
 
 function decide(equity) {

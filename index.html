@@ -51,7 +51,10 @@
 
       <section class="workspace">
         <aside id="setupPanel" class="panel controls" aria-label="Inputs">
-          <div class="section-title">Solver Setup</div>
+          <div class="section-heading">
+            <div class="section-title">Solver Setup</div>
+            <span id="setupStatus" class="source-badge setup">Hero未入力</span>
+          </div>
 
           <label class="field">
             <span>Hero position</span>
@@ -256,7 +259,7 @@
         <div id="rangeMatrix" class="range-matrix"></div>
       </section>
 
-      <section id="riverPanel" class="panel river-panel">
+      <section id="riverPanel" class="panel river-panel street-panel" data-street-panel="river">
         <div class="matrix-head">
           <div>
             <div class="section-heading">
@@ -320,7 +323,7 @@
         </div>
       </section>
 
-      <section id="turnPanel" class="panel turn-panel">
+      <section id="turnPanel" class="panel turn-panel street-panel" data-street-panel="turn">
         <div class="matrix-head">
           <div>
             <div class="section-heading">
@@ -401,7 +404,7 @@
         </div>
       </section>
 
-      <section id="flopPanel" class="panel flop-panel">
+      <section id="flopPanel" class="panel flop-panel street-panel" data-street-panel="flop">
         <div class="matrix-head">
           <div>
             <div class="section-heading">

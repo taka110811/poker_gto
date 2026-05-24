@@ -28,8 +28,6 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await page.getByRole("button", { name: "IP Range" }).click();
   await page.getByText("AA").click();
   await expect(page.locator("#comboCount")).toContainText("IP");
-  await expect(page.getByRole("button", { name: "75% pot" })).toBeVisible();
-  await page.getByRole("button", { name: "125% pot" }).click();
 
   await page.locator("#hero-0").selectOption("Kh");
   await page.locator("#hero-1").selectOption("Qd");
@@ -38,6 +36,8 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await page.locator("#board-2").selectOption("4c");
   await page.locator("#board-3").selectOption("2h");
   await page.locator("#board-4").selectOption("7s");
+  await expect(page.getByRole("button", { name: "75% pot" })).toBeVisible();
+  await page.getByRole("button", { name: "125% pot" }).click();
   await page.getByRole("button", { name: "Solve Spot" }).click();
 
   await expect(page.locator("#equity")).not.toHaveText("--", { timeout: 10000 });
@@ -171,10 +171,43 @@ test("keeps the solver workspace usable on mobile width", async ({ page }) => {
   expect(layout.resultsWidth).toBeLessThanOrEqual(layout.clientWidth);
   expect(layout.rangeMatrixWidth).toBeLessThanOrEqual(layout.clientWidth);
 
+  await page.locator("#hero-0").selectOption("Kh");
+  await page.locator("#hero-1").selectOption("Qd");
   await page.locator("#board-0").selectOption("Ah");
   await page.locator("#board-1").selectOption("8d");
   await page.locator("#board-2").selectOption("4c");
   await expect(page.locator("#streetSummary")).toHaveText("Flop");
+  await expect(page.locator("#setupStatus")).toHaveText("Flop計算可能");
+  await expect(page.locator("#flopPanel")).toHaveClass(/is-active/);
+  await expect(page.locator("#turnPanel")).toHaveClass(/is-inactive/);
+  await expect(page.locator('.view-nav a[href="#flopPanel"]')).toHaveClass(/active/);
 
+  expect(pageErrors).toEqual([]);
+});
+
+test("moves mobile users to the relevant solver after solve", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?testMode=1");
+
+  await page.locator("#hero-0").selectOption("Kh");
+  await page.locator("#hero-1").selectOption("Qd");
+  await page.locator("#board-0").selectOption("Ah");
+  await page.locator("#board-1").selectOption("8d");
+  await page.locator("#board-2").selectOption("4c");
+  await page.locator("#board-3").selectOption("2h");
+  await expect(page.locator("#setupStatus")).toHaveText("Turn計算可能");
+
+  await page.getByRole("button", { name: "Solve Spot" }).click();
+  await expect(page.locator("#turnStatus")).toContainText("runouts", { timeout: 10000 });
+  await page.waitForFunction(() => Math.abs(document.querySelector("#turnPanel").getBoundingClientRect().top) < 140);
+
+  const scrollPosition = await page.evaluate(() => ({
+    scrollY: window.scrollY,
+    turnTop: document.querySelector("#turnPanel").getBoundingClientRect().top,
+  }));
+  expect(scrollPosition.scrollY).toBeGreaterThan(0);
+  expect(Math.abs(scrollPosition.turnTop)).toBeLessThan(140);
   expect(pageErrors).toEqual([]);
 });
