@@ -89,10 +89,14 @@ const els = {
   turnStatus: document.querySelector("#turnStatus"),
   turnRunouts: document.querySelector("#turnRunouts"),
   turnOopBetFreq: document.querySelector("#turnOopBetFreq"),
+  turnOopCheckFreq: document.querySelector("#turnOopCheckFreq"),
   turnIpCallFreq: document.querySelector("#turnIpCallFreq"),
+  turnIpProbeFreq: document.querySelector("#turnIpProbeFreq"),
+  turnOopCallFreq: document.querySelector("#turnOopCallFreq"),
   turnEv: document.querySelector("#turnEv"),
   turnBestRiver: document.querySelector("#turnBestRiver"),
   turnRangeCap: document.querySelector("#turnRangeCap"),
+  turnSolverSettings: document.querySelector("#turnSolverSettings"),
   turnRunoutRows: document.querySelector("#turnRunoutRows"),
   sizeButtons: document.querySelectorAll(".size-button"),
   sizeResults: document.querySelector("#sizeResults"),
@@ -846,13 +850,21 @@ async function renderTurnSolverAsync(board, deadCards, requestId) {
 
   const average = averageTurnResults(results);
   const best = results.slice().sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
-  els.turnStatus.textContent = `${runoutCount} runouts / ${cacheHits} cached`;
+  els.turnStatus.textContent =
+    `${runoutCount} runouts / ${solverSettings.iterations} iterations / ` +
+    `${solverSettings.turnComboLimit} combo cap / ${cacheHits} cached`;
   els.turnRunouts.textContent = String(runoutCount);
   els.turnOopBetFreq.textContent = pct(average.oopBet);
+  els.turnOopCheckFreq.textContent = pct(1 - average.oopBet);
   els.turnIpCallFreq.textContent = pct(average.ipCall);
+  els.turnIpProbeFreq.textContent = pct(average.ipProbe);
+  els.turnOopCallFreq.textContent = pct(average.oopCall);
   els.turnEv.textContent = average.oopEv.toFixed(1);
   els.turnBestRiver.textContent = formatCard(best.riverCard);
   els.turnRangeCap.textContent = `${solverSettings.turnComboLimit} combos`;
+  els.turnSolverSettings.textContent =
+    `${solverSettings.iterations} iter / ${solverSettings.turnRunoutLimit} runouts / ` +
+    `${solverSettings.turnComboLimit} combos`;
   renderTurnRunoutRows(results);
 }
 
@@ -1038,7 +1050,18 @@ function resetRiverSolver(status) {
 
 function resetTurnSolver(status) {
   els.turnStatus.textContent = status;
-  [els.turnRunouts, els.turnOopBetFreq, els.turnIpCallFreq, els.turnEv, els.turnBestRiver, els.turnRangeCap].forEach((el) => {
+  [
+    els.turnRunouts,
+    els.turnOopBetFreq,
+    els.turnOopCheckFreq,
+    els.turnIpCallFreq,
+    els.turnIpProbeFreq,
+    els.turnOopCallFreq,
+    els.turnEv,
+    els.turnBestRiver,
+    els.turnRangeCap,
+    els.turnSolverSettings,
+  ].forEach((el) => {
     el.textContent = "--";
   });
   els.turnRunoutRows.innerHTML = "";
@@ -1085,10 +1108,12 @@ function averageTurnResults(results) {
   return results.reduce(
     (acc, { result }) => ({
       ipCall: acc.ipCall + result.ipCall / total,
+      ipProbe: acc.ipProbe + result.ipProbe / total,
+      oopCall: acc.oopCall + result.oopCall / total,
       oopBet: acc.oopBet + result.oopBet / total,
       oopEv: acc.oopEv + result.oopEv / total,
     }),
-    { ipCall: 0, oopBet: 0, oopEv: 0 }
+    { ipCall: 0, ipProbe: 0, oopCall: 0, oopBet: 0, oopEv: 0 }
   );
 }
 
@@ -1099,7 +1124,10 @@ function renderTurnRunoutRows(results) {
     row.innerHTML = `
       <td>${formatCard(riverCard)}</td>
       <td>${pct(result.oopBet)}</td>
+      <td>${pct(1 - result.oopBet)}</td>
       <td>${pct(result.ipCall)}</td>
+      <td>${pct(result.ipProbe)}</td>
+      <td>${pct(result.oopCall)}</td>
       <td>${result.oopEv.toFixed(1)}</td>
     `;
     els.turnRunoutRows.appendChild(row);
