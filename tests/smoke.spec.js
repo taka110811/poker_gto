@@ -24,10 +24,16 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.getByText("Solved Spot Reference")).toBeVisible();
   await expect(page.getByRole("button", { name: "OOP Range" })).toBeVisible();
   await expect(page.getByRole("button", { name: "IP Range" })).toBeVisible();
+  await expect(page.locator("#rangeEditor")).toHaveClass(/is-collapsed/);
+  await expect(page.locator("#rangeSummary")).toContainText("OOP Range");
+  await page.getByRole("button", { name: "詳細編集を開く" }).click();
+  await expect(page.locator("#rangeEditor")).not.toHaveClass(/is-collapsed/);
 
   await page.getByRole("button", { name: "IP Range" }).click();
+  await expect(page.locator("#rangeFeedback")).toHaveText("IP Range を編集中");
   await page.getByText("AA").click();
   await expect(page.locator("#comboCount")).toContainText("IP");
+  await expect(page.locator("#rangeFeedback")).toHaveText("IP AA を 0% に変更");
 
   await page.locator("#hero-0").selectOption("Kh");
   await page.locator("#hero-1").selectOption("Qd");
