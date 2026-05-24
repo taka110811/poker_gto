@@ -111,6 +111,22 @@
       .join(",");
   }
 
+  function rangeSummary(range) {
+    const summary = Object.entries(range).reduce(
+      (acc, [code, frequency]) => {
+        if (frequency <= 0) return acc;
+        acc.activeHands += 1;
+        acc.frequencyTotal += frequency;
+        acc.combos += comboCountFor(code) * frequency;
+        return acc;
+      },
+      { activeHands: 0, averageFrequency: 0, combos: 0, frequencyTotal: 0 }
+    );
+    summary.averageFrequency = summary.activeHands ? summary.frequencyTotal / summary.activeHands : 0;
+    delete summary.frequencyTotal;
+    return summary;
+  }
+
   function rangeCombos(range, board, comboLimit = 40) {
     const blocked = new Set(board);
     return choose(
@@ -135,6 +151,7 @@
     compactRangeKey,
     handCode,
     makePresetRange,
+    rangeSummary,
     rangeCombos,
   };
 })();

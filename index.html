@@ -265,7 +265,7 @@
         <div class="matrix-head">
           <div>
             <div class="section-title">Range Builder</div>
-            <p>OOP/IPのレンジ頻度をクリックで 0 / 25 / 50 / 75 / 100% に変更します。</p>
+            <p>OOP/IPのレンジ頻度を選択し、クリックまたはドラッグで編集します。</p>
           </div>
           <span id="comboCount">0 combos</span>
         </div>
@@ -275,6 +275,20 @@
             <strong id="rangeSummary">OOP Range</strong>
           </div>
           <p id="rangeFeedback">OOP Standard 30% を表示中</p>
+        </div>
+        <div class="range-metrics" aria-label="Range metrics">
+          <div>
+            <span>Weighted combos</span>
+            <strong id="rangeComboDetail">0</strong>
+          </div>
+          <div>
+            <span>Active hands</span>
+            <strong id="rangeActiveHands">0</strong>
+          </div>
+          <div>
+            <span>Avg frequency</span>
+            <strong id="rangeAverageFreq">0%</strong>
+          </div>
         </div>
         <div class="range-tabs" role="group" aria-label="Range side">
           <button id="oopRangeTab" class="range-tab active" type="button">OOP Range</button>
@@ -304,6 +318,13 @@
           詳細編集を開く
         </button>
         <div id="rangeEditor" class="range-editor is-collapsed">
+          <div id="rangeFrequencyPalette" class="range-frequency-palette" aria-label="Range frequency palette">
+            <button class="frequency-button" type="button" data-frequency="0">0%</button>
+            <button class="frequency-button" type="button" data-frequency="0.25">25%</button>
+            <button class="frequency-button" type="button" data-frequency="0.5">50%</button>
+            <button class="frequency-button" type="button" data-frequency="0.75">75%</button>
+            <button class="frequency-button active" type="button" data-frequency="1">100%</button>
+          </div>
           <div class="range-scale" aria-label="Range frequency scale">
             <span>0%</span>
             <span>25%</span>

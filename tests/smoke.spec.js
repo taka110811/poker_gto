@@ -28,12 +28,30 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#rangeSummary")).toContainText("OOP Range");
   await page.getByRole("button", { name: "詳細編集を開く" }).click();
   await expect(page.locator("#rangeEditor")).not.toHaveClass(/is-collapsed/);
+  await expect(page.getByLabel("Range metrics")).toContainText("Weighted combos");
+  await expect(page.getByLabel("Range frequency palette").getByRole("button", { name: "100%", exact: true })).toHaveClass(/active/);
 
   await page.getByRole("button", { name: "IP Range" }).click();
   await expect(page.locator("#rangeFeedback")).toHaveText("IP Range を編集中");
+  await page.getByLabel("Range frequency palette").getByRole("button", { name: "0%", exact: true }).click();
+  await expect(page.locator("#rangeFeedback")).toHaveText("IP 0% を選択");
   await page.getByText("AA").click();
   await expect(page.locator("#comboCount")).toContainText("IP");
+  await expect(page.locator("#rangeActiveHands")).not.toHaveText("0");
   await expect(page.locator("#rangeFeedback")).toHaveText("IP AA を 0% に変更");
+  await expect(page.locator("#riverStatus")).toHaveText("Solveで再計算");
+
+  await page.getByLabel("Range frequency palette").getByRole("button", { name: "50%", exact: true }).click();
+  const kkBox = await page.locator('.range-cell[data-code="KK"]').boundingBox();
+  const qqBox = await page.locator('.range-cell[data-code="QQ"]').boundingBox();
+  expect(kkBox).not.toBeNull();
+  expect(qqBox).not.toBeNull();
+  await page.mouse.move(kkBox.x + kkBox.width / 2, kkBox.y + kkBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(qqBox.x + qqBox.width / 2, qqBox.y + qqBox.height / 2);
+  await page.mouse.up();
+  await expect(page.locator('.range-cell[data-code="KK"]')).toContainText("50%");
+  await expect(page.locator('.range-cell[data-code="QQ"]')).toContainText("50%");
 
   await page.locator("#hero-0").selectOption("Kh");
   await page.locator("#hero-1").selectOption("Qd");
