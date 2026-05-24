@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "check": "node --check app.js && node --check solver.worker.js && node --check src/data/spotPresets.js && node --check src/data/precomputedStore.js && node --check src/domain/ranges.js && node --check src/domain/spotFilters.js && node --check src/ui/spotBrowser.js && python3 scripts/validate_spot_presets.py",
+    "check": "node --check app.js && node --check solver.worker.js && node --check src/data/spotPresets.js && node --check src/data/precomputedStore.js && node --check src/domain/cards.js && node --check src/domain/ranges.js && node --check src/domain/spots.js && node --check src/domain/spotFilters.js && node --check src/ui/spotBrowser.js && python3 scripts/validate_spot_presets.py",
     "db:generate": "python3 scripts/generate_precomputed_db.py",
     "db:query": "python3 scripts/query_precomputed_db.py",
     "db:validate": "python3 scripts/validate_precomputed_db.py",

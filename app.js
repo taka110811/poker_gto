@@ -1,21 +1,14 @@
-const ranks = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"];
-const rankValues = {
-  "2": 2,
-  "3": 3,
-  "4": 4,
-  "5": 5,
-  "6": 6,
-  "7": 7,
-  "8": 8,
-  "9": 9,
-  T: 10,
-  J: 11,
-  Q: 12,
-  K: 13,
-  A: 14,
-};
-const suits = ["s", "h", "d", "c"];
-const suitSymbols = { s: "♠", h: "♥", d: "♦", c: "♣" };
+const {
+  RANKS: ranks,
+  RANK_VALUES: rankValues,
+  activeStreetKey,
+  boardClass,
+  boardTexture,
+  deck,
+  formatCard,
+  setupStatusLabel,
+  streetLabel,
+} = window.PokerGtoCards;
 const {
   RANGE_LABELS: rangeLabels,
   RANGE_STEPS: rangeSteps,
@@ -25,6 +18,7 @@ const {
   makePresetRange,
   rangeCombos,
 } = window.PokerGtoRanges;
+const { precomputedQuery } = window.PokerGtoSpots;
 let spotPresets = {};
 const rangeState = {
   activeSide: "oop",
@@ -151,13 +145,6 @@ const spotBrowser = window.PokerGtoSpotBrowser.createSpotBrowser({
   onSelect: applySpotPreset,
 });
 
-function deck() {
-  return ranks
-    .slice()
-    .reverse()
-    .flatMap((rank) => suits.map((suit) => `${rank}${suit}`));
-}
-
 function makeCardSelect(id) {
   const select = document.createElement("select");
   select.id = id;
@@ -174,60 +161,15 @@ function makeCardSelect(id) {
   return select;
 }
 
-function formatCard(card) {
-  if (!card) return "";
-  return `${card[0]}${suitSymbols[card[1]]}`;
-}
-
-function boardKey(board) {
-  return board.slice().sort().join(" ");
-}
-
-function boardClass(board) {
-  if (board.length !== 5) return "River board required";
-
-  const rankCounts = board.reduce((counts, card) => {
-    counts[card[0]] = (counts[card[0]] || 0) + 1;
-    return counts;
-  }, {});
-  const suitCounts = board.reduce((counts, card) => {
-    counts[card[1]] = (counts[card[1]] || 0) + 1;
-    return counts;
-  }, {});
-  const highRank = board
-    .map((card) => card[0])
-    .sort((a, b) => rankValues[b] - rankValues[a])[0];
-  const suitPattern = Object.keys(suitCounts).length === 1 ? "monotone" : Math.max(...Object.values(suitCounts)) >= 3 ? "two-tone" : "rainbow";
-  const values = [...new Set(board.map((card) => rankValues[card[0]]))].sort((a, b) => a - b);
-  const connected = values.some((value, index) => values[index + 3] - value <= 4);
-  const paired = Object.values(rankCounts).some((count) => count > 1);
-  const texture = paired ? "paired" : connected ? "connected" : "dry";
-
-  return `${highRank}-high ${suitPattern} ${texture}`;
-}
-
-function currentBetTreeKey() {
-  const keys = [...betTreeState.activeSizes]
-    .map((size) => (size === "allin" ? "allin" : String(Math.round(Number(size) * 100))))
-    .sort((a, b) => {
-      if (a === "allin") return 1;
-      if (b === "allin") return -1;
-      return Number(a) - Number(b);
-    });
-  return `river-no-raise-${keys.join("-")}`;
-}
-
 function currentPrecomputedQuery(board) {
-  return {
+  return precomputedQuery({
+    activeSizes: betTreeState.activeSizes,
     board,
-    board_class: boardClass(board),
-    bet_tree_key: currentBetTreeKey(),
-    effective_stack_bb: Number(els.stack.value || 0),
-    positions: `${els.position.value} vs BB`,
-    pot_bb: Number(els.pot.value || 0),
-    pot_type: "SRP",
-    street: "river",
-  };
+    boardClass: boardClass(board),
+    position: els.position.value,
+    pot: els.pot.value,
+    stack: els.stack.value,
+  });
 }
 
 function selectedCards() {
@@ -261,31 +203,6 @@ function sync() {
   if (knownBoard.length !== 4) resetTurnSolver("Board 4枚で有効");
   if (knownBoard.length !== 3) resetFlopSolver("Board 3枚で有効");
   updateStreetPanels(knownBoard.length);
-}
-
-function streetLabel(boardCount) {
-  if (boardCount === 0) return "No board";
-  if (boardCount === 3) return "Flop";
-  if (boardCount === 4) return "Turn";
-  if (boardCount === 5) return "River";
-  return `${boardCount} cards`;
-}
-
-function setupStatusLabel(hero, board, duplicates) {
-  const heroCount = hero.filter(Boolean).length;
-  if (duplicates.size > 0) return "カード重複";
-  if (heroCount < 2) return `Hero ${heroCount}/2`;
-  if (board.length === 3) return "Flop計算可能";
-  if (board.length === 4) return "Turn計算可能";
-  if (board.length === 5) return "River計算可能";
-  return `Board ${board.length}/3+`;
-}
-
-function activeStreetKey(boardCount) {
-  if (boardCount === 3) return "flop";
-  if (boardCount === 4) return "turn";
-  if (boardCount === 5) return "river";
-  return "";
 }
 
 function updateStreetPanels(boardCount) {
@@ -749,7 +666,7 @@ function renderFlopSolver(board, deadCards) {
       advantage: rangeAdvantageLabel(turnOopScore, turnIpScore),
       ipScore: turnIpScore,
       oopScore: turnOopScore,
-      texture: turnBoardTexture(turnBoard),
+      texture: boardTexture(turnBoard),
       turnCard,
     };
   });
@@ -757,7 +674,7 @@ function renderFlopSolver(board, deadCards) {
   const volatility = runoutVolatility(turnRows);
 
   els.flopStatus.textContent = `${turnCards.length} turn samples / ${solverSettings.flopComboLimit} combo cap`;
-  els.flopTexture.textContent = flopBoardTexture(board);
+  els.flopTexture.textContent = boardTexture(board);
   els.flopOopScore.textContent = oopScore.toFixed(2);
   els.flopIpScore.textContent = ipScore.toFixed(2);
   els.flopRangeAdvantage.textContent = rangeAdvantageLabel(oopScore, ipScore);
@@ -1155,27 +1072,6 @@ function renderTurnRunoutRows(results) {
   });
 }
 
-function flopBoardTexture(board) {
-  return boardTexture(board);
-}
-
-function turnBoardTexture(board) {
-  return boardTexture(board);
-}
-
-function boardTexture(board) {
-  const ranksOnBoard = board.map((card) => card[0]);
-  const values = [...new Set(ranksOnBoard.map((rank) => rankValues[rank]))].sort((a, b) => a - b);
-  const rankCounts = countBy(ranksOnBoard);
-  const suitCounts = countBy(board.map((card) => card[1]));
-  const highRank = ranksOnBoard.sort((a, b) => rankValues[b] - rankValues[a])[0];
-  const paired = Object.values(rankCounts).some((count) => count > 1);
-  const connected = values.length >= 3 && values.some((value, index) => index + 2 < values.length && values[index + 2] - value <= 4);
-  const suitPattern = Object.keys(suitCounts).length === 1 ? "monotone" : Math.max(...Object.values(suitCounts)) >= 2 ? "two-tone" : "rainbow";
-  const texture = paired ? "paired" : connected ? "connected" : "dry";
-  return `${highRank}-high ${suitPattern} ${texture}`;
-}
-
 function flopRangeScore(range, board) {
   const combos = rangeCombos(range, board, solverSettings.flopComboLimit);
   const totalWeight = combos.reduce((sum, combo) => sum + combo.frequency, 0) || 1;
@@ -1199,7 +1095,7 @@ function rangeAdvantageLabel(oopScore, ipScore) {
 
 function flopStrategyMix(oopScore, ipScore, board) {
   const advantage = clamp((oopScore - ipScore) * 0.18, -0.18, 0.18);
-  const texture = flopBoardTexture(board);
+  const texture = boardTexture(board);
   const textureAdjustment = texture.includes("dry") ? 0.1 : texture.includes("connected") ? -0.08 : -0.04;
   const oopCbet = clamp(0.52 + advantage + textureAdjustment, 0.22, 0.82);
   const ipContinue = clamp(0.58 - advantage + (texture.includes("connected") ? 0.08 : 0), 0.28, 0.88);
