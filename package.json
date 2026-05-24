@@ -8,6 +8,7 @@
     "db:query": "python3 scripts/query_precomputed_db.py",
     "db:validate": "python3 scripts/validate_precomputed_db.py",
     "test:db": "python3 -m unittest discover tests/db",
+    "test:unit": "node --test tests/unit/*.test.js",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
