@@ -386,6 +386,61 @@
           </table>
         </div>
       </section>
+
+      <section class="panel flop-panel">
+        <div class="matrix-head">
+          <div>
+            <div class="section-heading">
+              <div class="section-title">Flop Solver Lite</div>
+              <span class="source-badge live">Texture Scan</span>
+            </div>
+            <p>Board 3枚からtextureとrange advantageを確認し、小さいTurn候補を列挙します。</p>
+          </div>
+          <span id="flopStatus">Waiting for flop</span>
+        </div>
+
+        <div class="river-grid">
+          <div class="river-metric">
+            <span>Texture</span>
+            <strong id="flopTexture">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>OOP range score</span>
+            <strong id="flopOopScore">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>IP range score</span>
+            <strong id="flopIpScore">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Range advantage</span>
+            <strong id="flopRangeAdvantage">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Turn samples</span>
+            <strong id="flopTurnSamples">--</strong>
+          </div>
+          <div class="river-metric">
+            <span>Accuracy</span>
+            <strong id="flopAccuracy">--</strong>
+          </div>
+        </div>
+
+        <div class="size-table-wrap">
+          <table class="size-table">
+            <thead>
+              <tr>
+                <th>Turn</th>
+                <th>Texture</th>
+                <th>OOP score</th>
+                <th>IP score</th>
+                <th>Advantage</th>
+              </tr>
+            </thead>
+            <tbody id="flopTurnRows"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <script src="./vendor/sql.js/sql-wasm.js"></script>
