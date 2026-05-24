@@ -232,6 +232,13 @@
           </div>
           <span id="comboCount">0 combos</span>
         </div>
+        <div class="range-overview">
+          <div>
+            <span>編集中</span>
+            <strong id="rangeSummary">OOP Range</strong>
+          </div>
+          <p id="rangeFeedback">OOP Standard 30% を表示中</p>
+        </div>
         <div class="range-tabs" role="group" aria-label="Range side">
           <button id="oopRangeTab" class="range-tab active" type="button">OOP Range</button>
           <button id="ipRangeTab" class="range-tab" type="button">IP Range</button>
@@ -256,7 +263,19 @@
             </select>
           </label>
         </div>
-        <div id="rangeMatrix" class="range-matrix"></div>
+        <button id="toggleRangeEditor" class="secondary range-editor-toggle" type="button" aria-expanded="false">
+          詳細編集を開く
+        </button>
+        <div id="rangeEditor" class="range-editor is-collapsed">
+          <div class="range-scale" aria-label="Range frequency scale">
+            <span>0%</span>
+            <span>25%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span>100%</span>
+          </div>
+          <div id="rangeMatrix" class="range-matrix"></div>
+        </div>
       </section>
 
       <section id="riverPanel" class="panel river-panel street-panel" data-street-panel="river">

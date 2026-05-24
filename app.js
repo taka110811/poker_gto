@@ -26,6 +26,7 @@ const rangeLabels = {
 const rangeSteps = [0, 0.25, 0.5, 0.75, 1];
 const rangeState = {
   activeSide: "oop",
+  editorOpen: false,
   oop: {},
   ip: {},
 };
@@ -66,6 +67,10 @@ const els = {
   streetSummary: document.querySelector("#streetSummary"),
   rangeMatrix: document.querySelector("#rangeMatrix"),
   comboCount: document.querySelector("#comboCount"),
+  rangeEditor: document.querySelector("#rangeEditor"),
+  rangeFeedback: document.querySelector("#rangeFeedback"),
+  rangeSummary: document.querySelector("#rangeSummary"),
+  toggleRangeEditor: document.querySelector("#toggleRangeEditor"),
   oopRangeTab: document.querySelector("#oopRangeTab"),
   ipRangeTab: document.querySelector("#ipRangeTab"),
   oopPreset: document.querySelector("#oopPreset"),
@@ -307,6 +312,7 @@ function renderMatrix() {
 
   els.rangeMatrix.innerHTML = "";
   let comboCount = 0;
+  let activeHands = 0;
   ranks.forEach((rowRank, row) => {
     ranks.forEach((colRank, col) => {
       const code =
@@ -318,19 +324,25 @@ function renderMatrix() {
       const cell = document.createElement("div");
       cell.className = "range-cell";
       const frequency = activeRange[code] || 0;
+      cell.classList.add(`freq-${Math.round(frequency * 100)}`);
       if (frequency > 0) {
         cell.classList.add("in-range");
         cell.style.opacity = String(0.35 + frequency * 0.65);
         comboCount += comboCountFor(code) * frequency;
+        activeHands += 1;
       }
       if (code === heroHand) cell.classList.add("hero-hand");
       cell.dataset.code = code;
+      cell.setAttribute("aria-label", `${code} ${Math.round(frequency * 100)}%`);
+      cell.title = `${code}: ${Math.round(frequency * 100)}%`;
       cell.innerHTML = `${code}<small>${Math.round(frequency * 100)}%</small>`;
       cell.addEventListener("click", () => cycleRangeFrequency(code));
       els.rangeMatrix.appendChild(cell);
     });
   });
-  els.comboCount.textContent = `${rangeState.activeSide.toUpperCase()} ${comboCount.toFixed(0)} combos`;
+  const sideLabel = rangeState.activeSide.toUpperCase();
+  els.comboCount.textContent = `${sideLabel} ${comboCount.toFixed(0)} combos`;
+  els.rangeSummary.textContent = `${sideLabel} Range / ${activeHands} hands`;
 }
 
 function cycleRangeFrequency(code) {
@@ -340,7 +352,23 @@ function cycleRangeFrequency(code) {
   range[code] = rangeSteps[nextIndex];
   invalidateSolverCache();
   renderMatrix();
+  setRangeFeedback(`${rangeState.activeSide.toUpperCase()} ${code} を ${Math.round(range[code] * 100)}% に変更`);
   resetRiverSolver("Solveで再計算");
+}
+
+function setRangeFeedback(message) {
+  els.rangeFeedback.textContent = message;
+}
+
+function renderRangeEditorToggle() {
+  els.rangeEditor.classList.toggle("is-collapsed", !rangeState.editorOpen);
+  els.toggleRangeEditor.textContent = rangeState.editorOpen ? "詳細編集を閉じる" : "詳細編集を開く";
+  els.toggleRangeEditor.setAttribute("aria-expanded", String(rangeState.editorOpen));
+}
+
+function toggleRangeEditor() {
+  rangeState.editorOpen = !rangeState.editorOpen;
+  renderRangeEditorToggle();
 }
 
 function toggleBetSize(size) {
@@ -390,6 +418,7 @@ function applyPreset(side, presetName) {
   rangeState[side] = makePresetRange(presetName);
   invalidateSolverCache();
   renderMatrix();
+  setRangeFeedback(`${side.toUpperCase()} ${rangeLabels[presetName]} を適用`);
   resetRiverSolver("Solveで再計算");
 }
 
@@ -398,6 +427,7 @@ function setActiveRange(side) {
   els.oopRangeTab.classList.toggle("active", side === "oop");
   els.ipRangeTab.classList.toggle("active", side === "ip");
   renderMatrix();
+  setRangeFeedback(`${side.toUpperCase()} Range を編集中`);
 }
 
 function comboCountFor(code) {
@@ -1600,6 +1630,7 @@ function init() {
     els.ipPreset.value = els.villainRange.value;
     applyPreset("ip", els.villainRange.value);
   });
+  els.toggleRangeEditor.addEventListener("click", toggleRangeEditor);
   els.sizeButtons.forEach((button) => {
     button.addEventListener("click", () => toggleBetSize(button.dataset.size));
   });
@@ -1608,6 +1639,7 @@ function init() {
   els.clearCards.addEventListener("click", clearCards);
   rangeState.oop = makePresetRange(els.oopPreset.value);
   rangeState.ip = makePresetRange(els.ipPreset.value);
+  renderRangeEditorToggle();
   renderBetSizeButtons();
   void loadPrecomputedSpots();
   sync();
