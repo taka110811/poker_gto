@@ -111,6 +111,32 @@ test("applies a spot preset and solves the selected street", async ({ page }) =>
   expect(pageErrors).toEqual([]);
 });
 
+test("applies spot browser cards and highlights the active preset", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  const turnCard = page.locator('.spot-card[data-preset="btn-bb-srp-turn"]');
+  const wetFlopCard = page.locator('.spot-card[data-preset="btn-bb-wet-flop"]');
+
+  await expect(turnCard).toContainText("Turn");
+  await expect(turnCard).toContainText("BTN vs BB SRP");
+  await turnCard.click();
+  await expect(page.locator("#spotPreset")).toHaveValue("btn-bb-srp-turn");
+  await expect(turnCard).toHaveClass(/active/);
+  await expect(page.locator("#streetSummary")).toHaveText("Turn");
+  await expect(page.locator("#turnPanel")).toHaveClass(/is-active/);
+
+  await wetFlopCard.click();
+  await expect(page.locator("#spotPreset")).toHaveValue("btn-bb-wet-flop");
+  await expect(wetFlopCard).toHaveClass(/active/);
+  await expect(turnCard).not.toHaveClass(/active/);
+  await expect(page.locator("#streetSummary")).toHaveText("Flop");
+  await expect(page.locator("#flopPanel")).toHaveClass(/is-active/);
+
+  expect(pageErrors).toEqual([]);
+});
+
 test("solves a turn spot by rolling out capped river cards", async ({ page }) => {
   const pageErrors = collectPageErrors(page);
 
