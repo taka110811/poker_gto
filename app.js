@@ -26,6 +26,9 @@ const rangeLabels = {
 const spotPresets = {
   "btn-bb-srp-flop-dry": {
     name: "BTN vs BB SRP Flop - Dry A-high",
+    street: "Flop",
+    spot: "BTN vs BB SRP",
+    texture: "Dry A-high",
     position: "BTN",
     villainRange: "standard",
     oopPreset: "standard",
@@ -39,6 +42,9 @@ const spotPresets = {
   },
   "btn-bb-srp-turn": {
     name: "BTN vs BB SRP Turn",
+    street: "Turn",
+    spot: "BTN vs BB SRP",
+    texture: "A-high turn",
     position: "BTN",
     villainRange: "standard",
     oopPreset: "standard",
@@ -52,6 +58,9 @@ const spotPresets = {
   },
   "btn-bb-srp-river": {
     name: "BTN vs BB SRP River",
+    street: "River",
+    spot: "BTN vs BB SRP",
+    texture: "A-high river",
     position: "BTN",
     villainRange: "standard",
     oopPreset: "standard",
@@ -65,6 +74,9 @@ const spotPresets = {
   },
   "btn-bb-wet-flop": {
     name: "BTN vs BB SRP Flop - Wet board",
+    street: "Flop",
+    spot: "BTN vs BB SRP",
+    texture: "Wet broadway",
     position: "BTN",
     villainRange: "wide",
     oopPreset: "standard",
@@ -78,6 +90,9 @@ const spotPresets = {
   },
   "sb-bb-short-river": {
     name: "SB vs BB Short stack River",
+    street: "River",
+    spot: "SB vs BB",
+    texture: "Short stack",
     position: "SB",
     villainRange: "wide",
     oopPreset: "wide",
@@ -119,6 +134,7 @@ let solverRequestId = 0;
 
 const els = {
   spotPreset: document.querySelector("#spotPreset"),
+  spotCards: document.querySelector("#spotCards"),
   position: document.querySelector("#position"),
   villainRange: document.querySelector("#villainRange"),
   pot: document.querySelector("#pot"),
@@ -219,6 +235,7 @@ function makeCardSelect(id) {
     .join("")}`;
   select.addEventListener("change", () => {
     els.spotPreset.value = "";
+    updateSpotCards();
     invalidateSolverCache();
     sync();
   });
@@ -356,6 +373,12 @@ function updateStreetPanels(boardCount) {
   });
 }
 
+function updateSpotCards() {
+  els.spotCards.querySelectorAll(".spot-card").forEach((button) => {
+    button.classList.toggle("active", button.dataset.preset === els.spotPreset.value);
+  });
+}
+
 function invalidateSolverCache() {
   solverCache.clear();
   solverRequestId += 1;
@@ -485,6 +508,7 @@ function makePresetRange(rangeName) {
 
 function applyPreset(side, presetName) {
   els.spotPreset.value = "";
+  updateSpotCards();
   rangeState[side] = makePresetRange(presetName);
   invalidateSolverCache();
   renderMatrix();
@@ -1666,6 +1690,7 @@ function randomDeal() {
     select.value = cards[index];
   });
   els.spotPreset.value = "";
+  updateSpotCards();
   sync();
 }
 
@@ -1674,6 +1699,7 @@ function clearCards() {
     select.value = "";
   });
   els.spotPreset.value = "";
+  updateSpotCards();
   sync();
 }
 
@@ -1685,7 +1711,10 @@ function setCardSelects(container, cards) {
 
 function applySpotPreset(presetKey) {
   const preset = spotPresets[presetKey];
-  if (!preset) return;
+  if (!preset) {
+    updateSpotCards();
+    return;
+  }
 
   els.position.value = preset.position;
   els.villainRange.value = preset.villainRange;
@@ -1702,19 +1731,45 @@ function applySpotPreset(presetKey) {
   invalidateSolverCache();
   setRangeFeedback(`${preset.name} を適用`);
   sync();
+  updateSpotCards();
+}
+
+function renderSpotCards() {
+  els.spotCards.innerHTML = "";
+  Object.entries(spotPresets).forEach(([key, preset]) => {
+    const button = document.createElement("button");
+    button.className = "spot-card";
+    button.type = "button";
+    button.dataset.preset = key;
+    button.innerHTML = `
+      <span>${preset.street}</span>
+      <strong>${preset.spot}</strong>
+      <small>${preset.texture}</small>
+      <b>${preset.stack}bb stack / ${preset.pot}bb pot</b>
+    `;
+    button.addEventListener("click", () => {
+      els.spotPreset.value = key;
+      applySpotPreset(key);
+    });
+    els.spotCards.appendChild(button);
+  });
+  updateSpotCards();
 }
 
 function init() {
   for (let i = 0; i < 2; i += 1) els.heroCards.appendChild(makeCardSelect(`hero-${i}`));
   for (let i = 0; i < 5; i += 1) els.boardCards.appendChild(makeCardSelect(`board-${i}`));
+  renderSpotCards();
   [els.position, els.villainRange, els.pot, els.toCall, els.stack, els.betSize].forEach((el) => {
     el.addEventListener("input", () => {
       els.spotPreset.value = "";
+      updateSpotCards();
       invalidateSolverCache();
       sync();
     });
     el.addEventListener("change", () => {
       els.spotPreset.value = "";
+      updateSpotCards();
       invalidateSolverCache();
       sync();
     });
