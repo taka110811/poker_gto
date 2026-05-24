@@ -17,9 +17,14 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--text);
   font-family:
@@ -60,9 +65,9 @@ p {
 
 .solver-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .solver-summary div {
@@ -86,9 +91,38 @@ p {
   font-size: 18px;
 }
 
+.view-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+  overflow-x: auto;
+  background: var(--bg);
+  scrollbar-width: thin;
+}
+
+.view-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--panel);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .workspace {
   display: grid;
-  grid-template-columns: 320px minmax(420px, 1fr) 320px;
+  grid-template-columns: minmax(280px, 340px) minmax(360px, 1fr) minmax(300px, 360px);
   gap: 16px;
 }
 
@@ -101,6 +135,12 @@ p {
 .controls,
 .results {
   padding: 16px;
+}
+
+.controls {
+  position: sticky;
+  top: 56px;
+  align-self: start;
 }
 
 .section-title {
@@ -175,6 +215,12 @@ select {
   border-radius: 6px;
   background: #11161a;
   color: var(--text);
+}
+
+input,
+select,
+button {
+  touch-action: manipulation;
 }
 
 .grid-2 {
@@ -433,6 +479,7 @@ button {
 
 .reference-table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 12px;
 }
@@ -509,8 +556,10 @@ button {
 
 .range-matrix {
   display: grid;
-  grid-template-columns: repeat(13, minmax(34px, 1fr));
+  grid-template-columns: repeat(13, minmax(42px, 1fr));
   gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .range-cell {
@@ -546,7 +595,7 @@ button {
 
 .river-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
 }
 
@@ -599,7 +648,8 @@ button {
 }
 
 .river-metric strong {
-  font-size: 22px;
+  overflow-wrap: anywhere;
+  font-size: clamp(16px, 1.5vw, 22px);
 }
 
 .size-table-wrap {
@@ -609,6 +659,7 @@ button {
 
 .size-table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -645,11 +696,15 @@ button {
     grid-column: 1 / -1;
     order: -1;
   }
+
+  .controls {
+    position: static;
+  }
 }
 
 @media (max-width: 760px) {
   .app {
-    width: min(100vw - 20px, 720px);
+    width: min(100vw - 16px, 720px);
     padding: 12px 0;
   }
 
@@ -663,43 +718,99 @@ button {
     grid-template-columns: 1fr 1fr;
   }
 
+  .view-nav {
+    margin-right: -8px;
+    margin-left: -8px;
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
   .primary {
     width: 100%;
   }
 
   .workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .controls {
+    order: -3;
   }
 
   .table-area {
-    min-height: 420px;
+    order: -2;
+    min-height: 360px;
+    padding: 10px;
+  }
+
+  .results {
+    order: -1;
+  }
+
+  input,
+  select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .card-row.board {
+    grid-template-columns: repeat(5, minmax(54px, 1fr));
+    overflow-x: auto;
   }
 
   .felt {
-    min-height: 388px;
-    border-radius: 28%;
+    min-height: 340px;
+    border-width: 6px;
+    border-radius: 26%;
+  }
+
+  .seat {
+    min-width: 132px;
+    padding: 8px;
+  }
+
+  .villain {
+    top: 22px;
+  }
+
+  .hero {
+    bottom: 22px;
+  }
+
+  .board-zone {
+    width: 92%;
+  }
+
+  .display-cards {
+    gap: 5px;
+    min-height: 54px;
   }
 
   .playing-card {
-    width: 42px;
-    height: 58px;
+    width: 36px;
+    height: 50px;
     font-size: 14px;
   }
 
+  .preset-row {
+    grid-template-columns: 1fr;
+  }
+
   .range-matrix {
-    grid-template-columns: repeat(13, minmax(24px, 1fr));
+    grid-template-columns: repeat(13, 42px);
     gap: 3px;
   }
 
+  .range-cell {
+    width: 42px;
+    font-size: 10px;
+  }
+
   .river-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   }
 
   .size-buttons {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .range-cell {
-    font-size: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
