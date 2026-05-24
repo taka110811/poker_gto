@@ -118,9 +118,11 @@ test("applies spot browser cards and highlights the active preset", async ({ pag
 
   const turnCard = page.locator('.spot-card[data-preset="btn-bb-srp-turn"]');
   const wetFlopCard = page.locator('.spot-card[data-preset="btn-bb-wet-flop"]');
+  const monotoneCard = page.locator('.spot-card[data-preset="btn-bb-srp-flop-monotone"]');
 
   await expect(turnCard).toContainText("Turn");
   await expect(turnCard).toContainText("BTN vs BB SRP");
+  await expect(page.locator(".spot-card")).toHaveCount(15);
   await turnCard.click();
   await expect(page.locator("#spotPreset")).toHaveValue("btn-bb-srp-turn");
   await expect(turnCard).toHaveClass(/active/);
@@ -133,6 +135,13 @@ test("applies spot browser cards and highlights the active preset", async ({ pag
   await expect(turnCard).not.toHaveClass(/active/);
   await expect(page.locator("#streetSummary")).toHaveText("Flop");
   await expect(page.locator("#flopPanel")).toHaveClass(/is-active/);
+
+  await expect(monotoneCard).toContainText("Monotone");
+  await monotoneCard.click();
+  await expect(page.locator("#spotPreset")).toHaveValue("btn-bb-srp-flop-monotone");
+  await expect(monotoneCard).toHaveClass(/active/);
+  await expect(page.locator("#board-0")).toHaveValue("Kh");
+  await expect(page.locator("#streetSummary")).toHaveText("Flop");
 
   expect(pageErrors).toEqual([]);
 });
