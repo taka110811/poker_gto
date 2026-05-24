@@ -37,6 +37,8 @@ const solverSettings = {
   comboLimit: 40,
   turnComboLimit: 16,
   turnRunoutLimit: new URLSearchParams(window.location.search).get("testMode") === "1" ? 4 : 8,
+  flopComboLimit: 24,
+  flopTurnLimit: new URLSearchParams(window.location.search).get("testMode") === "1" ? 4 : 8,
   version: "river-v1",
 };
 const solverCache = new Map();
@@ -100,6 +102,14 @@ const els = {
   turnCalcTime: document.querySelector("#turnCalcTime"),
   turnAccuracy: document.querySelector("#turnAccuracy"),
   turnRunoutRows: document.querySelector("#turnRunoutRows"),
+  flopStatus: document.querySelector("#flopStatus"),
+  flopTexture: document.querySelector("#flopTexture"),
+  flopOopScore: document.querySelector("#flopOopScore"),
+  flopIpScore: document.querySelector("#flopIpScore"),
+  flopRangeAdvantage: document.querySelector("#flopRangeAdvantage"),
+  flopTurnSamples: document.querySelector("#flopTurnSamples"),
+  flopAccuracy: document.querySelector("#flopAccuracy"),
+  flopTurnRows: document.querySelector("#flopTurnRows"),
   sizeButtons: document.querySelectorAll(".size-button"),
   sizeResults: document.querySelector("#sizeResults"),
   runSimulation: document.querySelector("#runSimulation"),
@@ -217,6 +227,7 @@ function sync() {
   renderPrecomputedReference(board.filter(Boolean));
   if (board.filter(Boolean).length !== 5) resetRiverSolver("Board 5枚で有効");
   if (board.filter(Boolean).length !== 4) resetTurnSolver("Board 4枚で有効");
+  if (board.filter(Boolean).length !== 3) resetFlopSolver("Board 3枚で有効");
 }
 
 function invalidateSolverCache() {
@@ -495,6 +506,7 @@ function simulate() {
   renderDecision(equity, decision, samples);
   renderRiverSolver(board.filter(Boolean));
   renderTurnSolver(board.filter(Boolean), all);
+  renderFlopSolver(board.filter(Boolean), all);
   renderPrecomputedReference(board.filter(Boolean));
 }
 
@@ -770,6 +782,38 @@ function renderTurnSolver(board, deadCards) {
   solverRequestId = requestId;
   turnRequestId = requestId;
   void renderTurnSolverAsync(board, deadCards, requestId);
+}
+
+function renderFlopSolver(board, deadCards) {
+  if (board.length !== 3) {
+    resetFlopSolver("Board 3枚で有効");
+    return;
+  }
+
+  const oopScore = flopRangeScore(rangeState.oop, board);
+  const ipScore = flopRangeScore(rangeState.ip, board);
+  const turnCards = flopTurnCards(deadCards, solverSettings.flopTurnLimit);
+  const turnRows = turnCards.map((turnCard) => {
+    const turnBoard = board.concat(turnCard);
+    const turnOopScore = flopRangeScore(rangeState.oop, turnBoard);
+    const turnIpScore = flopRangeScore(rangeState.ip, turnBoard);
+    return {
+      advantage: rangeAdvantageLabel(turnOopScore, turnIpScore),
+      ipScore: turnIpScore,
+      oopScore: turnOopScore,
+      texture: turnBoardTexture(turnBoard),
+      turnCard,
+    };
+  });
+
+  els.flopStatus.textContent = `${turnCards.length} turn samples / ${solverSettings.flopComboLimit} combo cap`;
+  els.flopTexture.textContent = flopBoardTexture(board);
+  els.flopOopScore.textContent = oopScore.toFixed(2);
+  els.flopIpScore.textContent = ipScore.toFixed(2);
+  els.flopRangeAdvantage.textContent = rangeAdvantageLabel(oopScore, ipScore);
+  els.flopTurnSamples.textContent = String(turnCards.length);
+  els.flopAccuracy.textContent = `Lite: texture scan, ${solverSettings.flopTurnLimit} turn cap, ${solverSettings.flopComboLimit} combo cap`;
+  renderFlopTurnRows(turnRows);
 }
 
 async function renderRiverSolverAsync(board, requestId) {
@@ -1075,11 +1119,30 @@ function resetTurnSolver(status) {
   els.turnRunoutRows.innerHTML = "";
 }
 
+function resetFlopSolver(status) {
+  els.flopStatus.textContent = status;
+  [
+    els.flopTexture,
+    els.flopOopScore,
+    els.flopIpScore,
+    els.flopRangeAdvantage,
+    els.flopTurnSamples,
+    els.flopAccuracy,
+  ].forEach((el) => {
+    el.textContent = "--";
+  });
+  els.flopTurnRows.innerHTML = "";
+}
+
 function turnRunoutCards(deadCards, limit) {
   const blocked = new Set(deadCards.filter(Boolean));
   return deck()
     .filter((card) => !blocked.has(card))
     .slice(0, limit);
+}
+
+function flopTurnCards(deadCards, limit) {
+  return turnRunoutCards(deadCards, limit);
 }
 
 function selectedBetSizes(pot, stack) {
@@ -1139,6 +1202,63 @@ function renderTurnRunoutRows(results) {
       <td>${result.oopEv.toFixed(1)}</td>
     `;
     els.turnRunoutRows.appendChild(row);
+  });
+}
+
+function flopBoardTexture(board) {
+  return boardTexture(board);
+}
+
+function turnBoardTexture(board) {
+  return boardTexture(board);
+}
+
+function boardTexture(board) {
+  const ranksOnBoard = board.map((card) => card[0]);
+  const values = [...new Set(ranksOnBoard.map((rank) => rankValues[rank]))].sort((a, b) => a - b);
+  const rankCounts = countBy(ranksOnBoard);
+  const suitCounts = countBy(board.map((card) => card[1]));
+  const highRank = ranksOnBoard.sort((a, b) => rankValues[b] - rankValues[a])[0];
+  const paired = Object.values(rankCounts).some((count) => count > 1);
+  const connected = values.length >= 3 && values.some((value, index) => index + 2 < values.length && values[index + 2] - value <= 4);
+  const suitPattern = Object.keys(suitCounts).length === 1 ? "monotone" : Math.max(...Object.values(suitCounts)) >= 2 ? "two-tone" : "rainbow";
+  const texture = paired ? "paired" : connected ? "connected" : "dry";
+  return `${highRank}-high ${suitPattern} ${texture}`;
+}
+
+function flopRangeScore(range, board) {
+  const combos = rangeCombos(range, board, solverSettings.flopComboLimit);
+  const totalWeight = combos.reduce((sum, combo) => sum + combo.frequency, 0) || 1;
+  const total = combos.reduce((sum, combo) => {
+    const madeHand = evaluateKnownCards(combo.cards.concat(board))[0];
+    return sum + (madeHand + 1) * combo.frequency;
+  }, 0);
+  return total / totalWeight;
+}
+
+function evaluateKnownCards(cards) {
+  if (cards.length >= 6) return evaluateSeven(cards);
+  return evaluateFive(cards);
+}
+
+function rangeAdvantageLabel(oopScore, ipScore) {
+  const diff = oopScore - ipScore;
+  if (Math.abs(diff) < 0.08) return "Neutral";
+  return diff > 0 ? "OOP" : "IP";
+}
+
+function renderFlopTurnRows(rows) {
+  els.flopTurnRows.innerHTML = "";
+  rows.forEach((rowResult) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${formatCard(rowResult.turnCard)}</td>
+      <td>${rowResult.texture}</td>
+      <td>${rowResult.oopScore.toFixed(2)}</td>
+      <td>${rowResult.ipScore.toFixed(2)}</td>
+      <td>${rowResult.advantage}</td>
+    `;
+    els.flopTurnRows.appendChild(row);
   });
 }
 

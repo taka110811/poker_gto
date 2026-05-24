@@ -114,3 +114,28 @@ test("solves a turn spot by rolling out capped river cards", async ({ page }) =>
   await expect(page.locator("#riverStatus")).toHaveText("Board 5枚で有効");
   expect(pageErrors).toEqual([]);
 });
+
+test("shows flop solver lite texture and turn samples", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  await page.locator("#hero-0").selectOption("Kh");
+  await page.locator("#hero-1").selectOption("Qd");
+  await page.locator("#board-0").selectOption("Ah");
+  await page.locator("#board-1").selectOption("8d");
+  await page.locator("#board-2").selectOption("4c");
+  await page.getByRole("button", { name: "Solve Spot" }).click();
+
+  await expect(page.locator("#flopStatus")).toContainText("4 turn samples");
+  await expect(page.locator("#flopTexture")).toContainText("A-high");
+  await expect(page.locator("#flopOopScore")).not.toHaveText("--");
+  await expect(page.locator("#flopIpScore")).not.toHaveText("--");
+  await expect(page.locator("#flopRangeAdvantage")).not.toHaveText("--");
+  await expect(page.locator("#flopTurnSamples")).toHaveText("4");
+  await expect(page.locator("#flopAccuracy")).toHaveText("Lite: texture scan, 4 turn cap, 24 combo cap");
+  await expect(page.locator("#flopTurnRows tr")).toHaveCount(4);
+  await expect(page.locator("#turnStatus")).toHaveText("Board 4枚で有効");
+  await expect(page.locator("#riverStatus")).toHaveText("Board 5枚で有効");
+  expect(pageErrors).toEqual([]);
+});

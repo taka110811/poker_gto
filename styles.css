@@ -462,7 +462,8 @@ button {
 }
 
 .river-panel,
-.turn-panel {
+.turn-panel,
+.flop-panel {
   margin-top: 16px;
   padding: 16px;
 }
