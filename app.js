@@ -97,6 +97,8 @@ const els = {
   turnBestRiver: document.querySelector("#turnBestRiver"),
   turnRangeCap: document.querySelector("#turnRangeCap"),
   turnSolverSettings: document.querySelector("#turnSolverSettings"),
+  turnCalcTime: document.querySelector("#turnCalcTime"),
+  turnAccuracy: document.querySelector("#turnAccuracy"),
   turnRunoutRows: document.querySelector("#turnRunoutRows"),
   sizeButtons: document.querySelectorAll(".size-button"),
   sizeResults: document.querySelector("#sizeResults"),
@@ -823,6 +825,7 @@ async function renderTurnSolverAsync(board, deadCards, requestId) {
 
   const pot = Number(els.pot.value || 0);
   const stack = Number(els.stack.value || 0);
+  const start = performance.now();
   els.turnStatus.textContent = "Calculating runouts...";
 
   let solved;
@@ -850,9 +853,10 @@ async function renderTurnSolverAsync(board, deadCards, requestId) {
 
   const average = averageTurnResults(results);
   const best = results.slice().sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
+  const elapsedMs = Math.round(performance.now() - start);
   els.turnStatus.textContent =
     `${runoutCount} runouts / ${solverSettings.iterations} iterations / ` +
-    `${solverSettings.turnComboLimit} combo cap / ${cacheHits} cached`;
+    `${solverSettings.turnComboLimit} combo cap / ${elapsedMs} ms / ${cacheHits} cached`;
   els.turnRunouts.textContent = String(runoutCount);
   els.turnOopBetFreq.textContent = pct(average.oopBet);
   els.turnOopCheckFreq.textContent = pct(1 - average.oopBet);
@@ -865,6 +869,8 @@ async function renderTurnSolverAsync(board, deadCards, requestId) {
   els.turnSolverSettings.textContent =
     `${solverSettings.iterations} iter / ${solverSettings.turnRunoutLimit} runouts / ` +
     `${solverSettings.turnComboLimit} combos`;
+  els.turnCalcTime.textContent = `${elapsedMs} ms`;
+  els.turnAccuracy.textContent = `Lite: ${runoutCount}/${solverSettings.turnRunoutLimit} runouts, ${solverSettings.turnComboLimit} combo cap`;
   renderTurnRunoutRows(results);
 }
 
@@ -1061,6 +1067,8 @@ function resetTurnSolver(status) {
     els.turnBestRiver,
     els.turnRangeCap,
     els.turnSolverSettings,
+    els.turnCalcTime,
+    els.turnAccuracy,
   ].forEach((el) => {
     el.textContent = "--";
   });
