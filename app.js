@@ -23,6 +23,73 @@ const rangeLabels = {
   wide: "Wide 45%",
   any: "Any two",
 };
+const spotPresets = {
+  "btn-bb-srp-flop-dry": {
+    name: "BTN vs BB SRP Flop - Dry A-high",
+    position: "BTN",
+    villainRange: "standard",
+    oopPreset: "standard",
+    ipPreset: "standard",
+    pot: 12,
+    toCall: 4,
+    stack: 85,
+    betSize: 8,
+    hero: ["Kh", "Qd"],
+    board: ["Ah", "8d", "4c", "", ""],
+  },
+  "btn-bb-srp-turn": {
+    name: "BTN vs BB SRP Turn",
+    position: "BTN",
+    villainRange: "standard",
+    oopPreset: "standard",
+    ipPreset: "standard",
+    pot: 18,
+    toCall: 6,
+    stack: 78,
+    betSize: 12,
+    hero: ["Kh", "Qd"],
+    board: ["Ah", "8d", "4c", "2h", ""],
+  },
+  "btn-bb-srp-river": {
+    name: "BTN vs BB SRP River",
+    position: "BTN",
+    villainRange: "standard",
+    oopPreset: "standard",
+    ipPreset: "standard",
+    pot: 24,
+    toCall: 8,
+    stack: 70,
+    betSize: 16,
+    hero: ["Kh", "Qd"],
+    board: ["Ah", "8d", "4c", "2h", "7s"],
+  },
+  "btn-bb-wet-flop": {
+    name: "BTN vs BB SRP Flop - Wet board",
+    position: "BTN",
+    villainRange: "wide",
+    oopPreset: "standard",
+    ipPreset: "wide",
+    pot: 12,
+    toCall: 4,
+    stack: 90,
+    betSize: 8,
+    hero: ["As", "Ks"],
+    board: ["Qs", "Js", "Td", "", ""],
+  },
+  "sb-bb-short-river": {
+    name: "SB vs BB Short stack River",
+    position: "SB",
+    villainRange: "wide",
+    oopPreset: "wide",
+    ipPreset: "wide",
+    pot: 30,
+    toCall: 10,
+    stack: 28,
+    betSize: 20,
+    hero: ["Ac", "Jc"],
+    board: ["As", "9d", "4c", "2h", "7s"],
+  },
+};
 const rangeSteps = [0, 0.25, 0.5, 0.75, 1];
 const rangeState = {
   activeSide: "oop",
@@ -51,6 +118,7 @@ let turnRequestId = 0;
 let solverRequestId = 0;
 
 const els = {
+  spotPreset: document.querySelector("#spotPreset"),
   position: document.querySelector("#position"),
   villainRange: document.querySelector("#villainRange"),
   pot: document.querySelector("#pot"),
@@ -150,6 +218,7 @@ function makeCardSelect(id) {
     .map((card) => `<option value="${card}">${formatCard(card)}</option>`)
     .join("")}`;
   select.addEventListener("change", () => {
+    els.spotPreset.value = "";
     invalidateSolverCache();
     sync();
   });
@@ -415,6 +484,7 @@ function makePresetRange(rangeName) {
 }
 
 function applyPreset(side, presetName) {
+  els.spotPreset.value = "";
   rangeState[side] = makePresetRange(presetName);
   invalidateSolverCache();
   renderMatrix();
@@ -1595,6 +1665,7 @@ function randomDeal() {
   selects.forEach((select, index) => {
     select.value = cards[index];
   });
+  els.spotPreset.value = "";
   sync();
 }
 
@@ -1602,6 +1673,34 @@ function clearCards() {
   document.querySelectorAll(".card-select").forEach((select) => {
     select.value = "";
   });
+  els.spotPreset.value = "";
+  sync();
+}
+
+function setCardSelects(container, cards) {
+  [...container.querySelectorAll("select")].forEach((select, index) => {
+    select.value = cards[index] || "";
+  });
+}
+
+function applySpotPreset(presetKey) {
+  const preset = spotPresets[presetKey];
+  if (!preset) return;
+
+  els.position.value = preset.position;
+  els.villainRange.value = preset.villainRange;
+  els.oopPreset.value = preset.oopPreset;
+  els.ipPreset.value = preset.ipPreset;
+  els.pot.value = preset.pot;
+  els.toCall.value = preset.toCall;
+  els.stack.value = preset.stack;
+  els.betSize.value = preset.betSize;
+  setCardSelects(els.heroCards, preset.hero);
+  setCardSelects(els.boardCards, preset.board);
+  rangeState.oop = makePresetRange(preset.oopPreset);
+  rangeState.ip = makePresetRange(preset.ipPreset);
+  invalidateSolverCache();
+  setRangeFeedback(`${preset.name} を適用`);
   sync();
 }
 
@@ -1610,14 +1709,17 @@ function init() {
   for (let i = 0; i < 5; i += 1) els.boardCards.appendChild(makeCardSelect(`board-${i}`));
   [els.position, els.villainRange, els.pot, els.toCall, els.stack, els.betSize].forEach((el) => {
     el.addEventListener("input", () => {
+      els.spotPreset.value = "";
       invalidateSolverCache();
       sync();
     });
     el.addEventListener("change", () => {
+      els.spotPreset.value = "";
       invalidateSolverCache();
       sync();
     });
   });
+  els.spotPreset.addEventListener("change", () => applySpotPreset(els.spotPreset.value));
   els.oopRangeTab.addEventListener("click", () => setActiveRange("oop"));
   els.ipRangeTab.addEventListener("click", () => setActiveRange("ip"));
   els.oopPreset.addEventListener("change", () => applyPreset("oop", els.oopPreset.value));

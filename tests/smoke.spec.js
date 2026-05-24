@@ -87,6 +87,30 @@ test("shows exact precomputed reference for seeded river board", async ({ page }
   expect(pageErrors).toEqual([]);
 });
 
+test("applies a spot preset and solves the selected street", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  await page.locator("#spotPreset").selectOption("btn-bb-srp-turn");
+
+  await expect(page.locator("#position")).toHaveValue("BTN");
+  await expect(page.locator("#villainRange")).toHaveValue("standard");
+  await expect(page.locator("#hero-0")).toHaveValue("Kh");
+  await expect(page.locator("#hero-1")).toHaveValue("Qd");
+  await expect(page.locator("#board-0")).toHaveValue("Ah");
+  await expect(page.locator("#board-3")).toHaveValue("2h");
+  await expect(page.locator("#board-4")).toHaveValue("");
+  await expect(page.locator("#streetSummary")).toHaveText("Turn");
+  await expect(page.locator("#setupStatus")).toHaveText("Turn計算可能");
+  await expect(page.locator("#rangeFeedback")).toHaveText("BTN vs BB SRP Turn を適用");
+  await expect(page.locator("#turnPanel")).toHaveClass(/is-active/);
+
+  await page.getByRole("button", { name: "Solve Spot" }).click();
+  await expect(page.locator("#turnStatus")).toContainText("runouts", { timeout: 10000 });
+  expect(pageErrors).toEqual([]);
+});
+
 test("solves a turn spot by rolling out capped river cards", async ({ page }) => {
   const pageErrors = collectPageErrors(page);
 
