@@ -315,20 +315,21 @@ function renderSpotPresetOptions() {
   });
 }
 
-function spotTextureCategory(texture) {
+function spotMatchesTextureFilter(texture, filter) {
+  if (filter === "all") return true;
   const value = texture.toLowerCase();
-  if (value.includes("monotone")) return "monotone";
-  if (value.includes("paired") || value.includes("pairing")) return "paired";
-  if (value.includes("flush")) return "flush";
-  if (value.includes("connected") || value.includes("wet")) return "connected";
-  if (value.includes("dry") || value.includes("brick") || value.includes("blank")) return "dry";
-  return "wet";
+  if (filter === "monotone") return value.includes("monotone");
+  if (filter === "paired") return value.includes("paired") || value.includes("pairing");
+  if (filter === "flush") return value.includes("flush");
+  if (filter === "connected") return value.includes("connected");
+  if (filter === "dry") return value.includes("dry") || value.includes("brick") || value.includes("blank");
+  if (filter === "wet") return value.includes("wet");
+  return false;
 }
 
 function spotMatchesFilters(preset) {
   const streetMatches = spotFilterState.street === "all" || preset.street === spotFilterState.street;
-  const textureMatches =
-    spotFilterState.texture === "all" || spotTextureCategory(preset.texture) === spotFilterState.texture;
+  const textureMatches = spotMatchesTextureFilter(preset.texture, spotFilterState.texture);
   return streetMatches && textureMatches;
 }
 
