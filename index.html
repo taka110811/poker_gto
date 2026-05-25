@@ -56,6 +56,57 @@
             <span id="setupStatus" class="source-badge setup">Hero未入力</span>
           </div>
 
+          <div class="practice-spot" aria-label="Practice Spot Builder">
+            <div class="section-heading">
+              <div class="section-title">Practice Spot</div>
+              <span class="source-badge">Approx / Lite</span>
+            </div>
+            <div class="grid-2">
+              <label class="field compact">
+                <span>Hero position</span>
+                <select id="practicePosition">
+                  <option value="BTN" selected>BTN</option>
+                  <option value="CO">CO</option>
+                  <option value="HJ">HJ</option>
+                  <option value="UTG">UTG</option>
+                  <option value="BB">BB</option>
+                  <option value="SB">SB</option>
+                </select>
+              </label>
+              <label class="field compact">
+                <span>Hero hand</span>
+                <select id="practiceHand">
+                  <option value="JJ" selected>JJ</option>
+                  <option value="QQ">QQ</option>
+                  <option value="TT">TT</option>
+                  <option value="AKs">AKs</option>
+                  <option value="AQs">AQs</option>
+                  <option value="AKo">AKo</option>
+                </select>
+              </label>
+            </div>
+            <label class="field">
+              <span>Flop</span>
+              <input id="practiceBoard" type="text" value="9s 7d 2c" inputmode="text" />
+            </label>
+            <div class="grid-2">
+              <label class="field compact">
+                <span>Pot bb</span>
+                <input id="practicePot" type="number" min="1" value="12" />
+              </label>
+              <label class="field compact">
+                <span>Facing amount bb</span>
+                <input id="practiceFacingAmount" type="number" min="0" value="8" />
+              </label>
+            </div>
+            <label class="field">
+              <span>Effective stack bb</span>
+              <input id="practiceStack" type="number" min="1" value="85" />
+            </label>
+            <button id="applyPracticeSpot" class="secondary" type="button">Apply practice spot</button>
+            <p id="practiceApplyStatus" class="practice-status">BTN / JJ / 9s 7d 2c を既存入力に反映できます。</p>
+          </div>
+
           <label class="field">
             <span>Spot preset</span>
             <select id="spotPreset">
@@ -166,6 +217,32 @@
         </section>
 
         <aside id="resultsPanel" class="panel results" aria-label="Results">
+          <div class="practice-result" aria-label="Practice recommendation">
+            <div class="section-heading">
+              <div class="section-title">Practice Recommendation</div>
+              <span id="practiceSource" class="source-badge">Approx / Lite</span>
+            </div>
+            <div class="action-box compact">
+              <span id="practiceDecisionLabel">Solve to start</span>
+              <strong id="practiceDecision">--</strong>
+            </div>
+            <div class="practice-factors">
+              <div>
+                <span>Equity</span>
+                <strong id="practiceEquity">--</strong>
+              </div>
+              <div>
+                <span>Pot odds</span>
+                <strong id="practicePotOdds">--</strong>
+              </div>
+              <div>
+                <span>SPR</span>
+                <strong id="practiceSpr">--</strong>
+              </div>
+            </div>
+            <p id="practiceNote" class="practice-note">完全GTOではなく学習用の近似です。</p>
+          </div>
+
           <div class="section-heading">
             <div class="section-title">Strategy Output</div>
             <span class="source-badge">Approx EV</span>

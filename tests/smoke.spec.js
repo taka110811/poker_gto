@@ -267,6 +267,46 @@ test("shows flop solver lite texture and turn samples", async ({ page }) => {
   expect(pageErrors).toEqual([]);
 });
 
+test("applies a practice spot and shows a recommendation", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  await expect(page.getByLabel("Practice Spot Builder")).toBeVisible();
+  await page.locator("#practicePosition").selectOption("BTN");
+  await page.locator("#practiceHand").selectOption("JJ");
+  await page.locator("#practiceBoard").fill("9s 7d 2c");
+  await page.locator("#practicePot").fill("12");
+  await page.locator("#practiceFacingAmount").fill("8");
+  await page.locator("#practiceStack").fill("85");
+  await page.getByRole("button", { name: "Apply practice spot" }).click();
+
+  await expect(page.locator("#position")).toHaveValue("BTN");
+  await expect(page.locator("#hero-0")).toHaveValue("Js");
+  await expect(page.locator("#hero-1")).toHaveValue("Jh");
+  await expect(page.locator("#board-0")).toHaveValue("9s");
+  await expect(page.locator("#board-1")).toHaveValue("7d");
+  await expect(page.locator("#board-2")).toHaveValue("2c");
+  await expect(page.locator("#board-3")).toHaveValue("");
+  await expect(page.locator("#pot")).toHaveValue("12");
+  await expect(page.locator("#toCall")).toHaveValue("8");
+  await expect(page.locator("#betSize")).toHaveValue("8");
+  await expect(page.locator("#stack")).toHaveValue("85");
+  await expect(page.locator("#streetSummary")).toHaveText("Flop");
+  await expect(page.locator("#flopPanel")).toHaveClass(/is-active/);
+  await expect(page.locator("#practiceApplyStatus")).toContainText("BTN / JJ / 9s 7d 2c");
+
+  await page.getByRole("button", { name: "Solve Spot" }).click();
+  await expect(page.locator("#practiceDecision")).toContainText(/Raise|Call|Fold/, { timeout: 10000 });
+  await expect(page.locator("#practiceEquity")).not.toHaveText("--");
+  await expect(page.locator("#practicePotOdds")).toHaveText("40%");
+  await expect(page.locator("#practiceSpr")).toHaveText("7.1");
+  await expect(page.locator("#practiceSource")).toHaveText("Approx EV + Flop Solver Lite");
+  await expect(page.locator("#practiceNote")).toContainText("完全GTOではなく学習用の近似");
+  await expect(page.locator("#flopStatus")).toContainText("4 turn samples");
+  expect(pageErrors).toEqual([]);
+});
+
 test("keeps the solver workspace usable on mobile width", async ({ page }) => {
   const pageErrors = collectPageErrors(page);
 
