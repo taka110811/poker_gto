@@ -55,6 +55,14 @@ const els = {
   spotCards: document.querySelector("#spotCards"),
   spotStreetFilter: document.querySelector("#spotStreetFilter"),
   spotTextureFilter: document.querySelector("#spotTextureFilter"),
+  practicePosition: document.querySelector("#practicePosition"),
+  practiceHand: document.querySelector("#practiceHand"),
+  practiceBoard: document.querySelector("#practiceBoard"),
+  practicePot: document.querySelector("#practicePot"),
+  practiceFacingAmount: document.querySelector("#practiceFacingAmount"),
+  practiceStack: document.querySelector("#practiceStack"),
+  applyPracticeSpot: document.querySelector("#applyPracticeSpot"),
+  practiceApplyStatus: document.querySelector("#practiceApplyStatus"),
   position: document.querySelector("#position"),
   villainRange: document.querySelector("#villainRange"),
   pot: document.querySelector("#pot"),
@@ -85,6 +93,13 @@ const els = {
   ipPreset: document.querySelector("#ipPreset"),
   actionLabel: document.querySelector("#actionLabel"),
   actionFrequency: document.querySelector("#actionFrequency"),
+  practiceDecisionLabel: document.querySelector("#practiceDecisionLabel"),
+  practiceDecision: document.querySelector("#practiceDecision"),
+  practiceEquity: document.querySelector("#practiceEquity"),
+  practicePotOdds: document.querySelector("#practicePotOdds"),
+  practiceSpr: document.querySelector("#practiceSpr"),
+  practiceSource: document.querySelector("#practiceSource"),
+  practiceNote: document.querySelector("#practiceNote"),
   equity: document.querySelector("#equity"),
   potOdds: document.querySelector("#potOdds"),
   spr: document.querySelector("#spr"),
@@ -599,11 +614,31 @@ function renderDecision(equityValue, decision, sampleCount) {
   els.potOdds.textContent = pct(decision.potOdds);
   els.spr.textContent = decision.spr.toFixed(1);
   els.samples.textContent = sampleCount.toLocaleString();
+  renderPracticeRecommendation(entries[0], equityValue, decision);
   setBars(decision);
   setReason(
     `エクイティ ${pct(equityValue)}、必要勝率 ${pct(decision.potOdds)}。` +
       ` ポジションとSPRを補正したChip EV近似では ${entries[0][0]} の頻度が最も高いです。`
   );
+}
+
+function strategySourceLabel(boardCount) {
+  if (boardCount === 3) return "Approx EV + Flop Solver Lite";
+  if (boardCount === 4) return "Approx EV + Turn Rollout Lite";
+  if (boardCount === 5) return "Approx EV + River Mini Solver";
+  return "Approx EV";
+}
+
+function renderPracticeRecommendation(bestAction, equityValue, decision) {
+  const { board } = selectedCards();
+  const boardCount = board.filter(Boolean).length;
+  els.practiceDecisionLabel.textContent = "Highest frequency action";
+  els.practiceDecision.textContent = `${bestAction[0]} ${pct(bestAction[1])}`;
+  els.practiceEquity.textContent = pct(equityValue);
+  els.practicePotOdds.textContent = pct(decision.potOdds);
+  els.practiceSpr.textContent = decision.spr.toFixed(1);
+  els.practiceSource.textContent = strategySourceLabel(boardCount);
+  els.practiceNote.textContent = "完全GTOではなく学習用の近似です。";
 }
 
 function setBars(decision) {
@@ -1296,6 +1331,79 @@ function shuffle(items) {
   return items;
 }
 
+function normalizeCardToken(token) {
+  const normalized = token.trim().replace(/^10/i, "T");
+  if (!/^[2-9TJQKA][shdc]$/i.test(normalized)) return "";
+  return normalized[0].toUpperCase() + normalized[1].toLowerCase();
+}
+
+function parsePracticeBoard(value) {
+  const cards = value
+    .split(/[\s,]+/)
+    .map(normalizeCardToken)
+    .filter(Boolean);
+  return cards.length === 3 ? cards : [];
+}
+
+function practiceHandCards(code, blockedCards) {
+  const explicit = code
+    .split(/[\s,]+/)
+    .map(normalizeCardToken)
+    .filter(Boolean);
+  if (explicit.length === 2) return explicit;
+
+  const hand = code.trim().toUpperCase();
+  const match = hand.match(/^([2-9TJQKA])([2-9TJQKA])([SO])?$/);
+  if (!match) return [];
+
+  const [, firstRank, secondRank, suitedFlag] = match;
+  const blocked = new Set(blockedCards);
+  const suits = ["s", "h", "d", "c"];
+  if (firstRank === secondRank) {
+    const cards = suits.map((suit) => `${firstRank}${suit}`).filter((card) => !blocked.has(card));
+    return cards.slice(0, 2);
+  }
+
+  for (const firstSuit of suits) {
+    for (const secondSuit of suits) {
+      if (suitedFlag === "S" && firstSuit !== secondSuit) continue;
+      if (suitedFlag === "O" && firstSuit === secondSuit) continue;
+      const cards = [`${firstRank}${firstSuit}`, `${secondRank}${secondSuit}`];
+      if (cards.every((card) => !blocked.has(card))) return cards;
+    }
+  }
+  return [];
+}
+
+function applyPracticeSpot() {
+  const board = parsePracticeBoard(els.practiceBoard.value);
+  if (board.length !== 3) {
+    els.practiceApplyStatus.textContent = "Flopは 9s 7d 2c のように3枚で入力してください。";
+    return;
+  }
+
+  const hero = practiceHandCards(els.practiceHand.value, board);
+  if (hero.length !== 2 || new Set(hero.concat(board)).size !== 5) {
+    els.practiceApplyStatus.textContent = "Hero handとFlopのカードが重複しない入力にしてください。";
+    return;
+  }
+
+  els.spotPreset.value = "";
+  els.position.value = els.practicePosition.value;
+  els.pot.value = els.practicePot.value;
+  els.toCall.value = els.practiceFacingAmount.value;
+  els.betSize.value = els.practiceFacingAmount.value;
+  els.stack.value = els.practiceStack.value;
+  setCardSelects(els.heroCards, hero);
+  setCardSelects(els.boardCards, board.concat(["", ""]));
+  updateSpotCards();
+  invalidateSolverCache();
+  renderBetSizeButtons();
+  sync();
+  els.practiceApplyStatus.textContent =
+    `${els.practicePosition.value} / ${els.practiceHand.value} / ${board.join(" ")} を既存入力に反映しました。`;
+}
+
 function randomDeal() {
   const cards = shuffle(deck());
   const selects = [...els.heroCards.querySelectorAll("select"), ...els.boardCards.querySelectorAll("select")];
@@ -1388,6 +1496,7 @@ function init() {
   els.sizeButtons.forEach((button) => {
     button.addEventListener("click", () => toggleBetSize(button.dataset.size));
   });
+  els.applyPracticeSpot.addEventListener("click", applyPracticeSpot);
   els.runSimulation.addEventListener("click", simulate);
   els.randomDeal.addEventListener("click", randomDeal);
   els.clearCards.addEventListener("click", clearCards);
