@@ -224,12 +224,16 @@ test("solves a turn spot by rolling out capped river cards", async ({ page }) =>
   await expect(page.locator("#turnIpProbeFreq")).not.toHaveText("--");
   await expect(page.locator("#turnOopCallFreq")).not.toHaveText("--");
   await expect(page.locator("#turnBestRiver")).not.toHaveText("--");
+  await expect(page.locator("#turnWorstRiver")).not.toHaveText("--");
+  await expect(page.locator("#turnVolatility")).not.toHaveText("--");
   await expect(page.locator("#turnRangeCap")).toHaveText("16 combos");
   await expect(page.locator("#turnSolverSettings")).toHaveText("6 iter / 4 runouts / 16 combos");
   await expect(page.locator("#turnCalcTime")).toContainText("ms");
   await expect(page.locator("#turnAccuracy")).toHaveText("Lite: 4/4 runouts, 16 combo cap");
   await expect(page.locator("#turnRunoutRows tr")).toHaveCount(4);
-  await expect(page.locator("#turnRunoutRows tr").first().locator("td")).toHaveCount(7);
+  await expect(page.locator("#turnRunoutRows tr").first().locator("td")).toHaveCount(10);
+  await expect(page.locator("#turnRunoutRows tr").first()).toContainText(/blank|overcard|pair|flush-completing|straight-connected/);
+  await expect(page.locator("#turnRunoutRows")).toContainText("+");
   await expect(page.locator("#riverStatus")).toHaveText("Board 5枚で有効");
   expect(pageErrors).toEqual([]);
 });

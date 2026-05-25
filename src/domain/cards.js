@@ -70,6 +70,25 @@
     return `${highRank}-high ${suitPattern} ${texture}`;
   }
 
+  function riverRunoutCategory(turnBoard, riverCard) {
+    const riverRank = riverCard[0];
+    const riverSuit = riverCard[1];
+    const turnRanks = turnBoard.map((card) => card[0]);
+    const turnValues = [...new Set(turnRanks.map((rank) => RANK_VALUES[rank]))].sort((a, b) => a - b);
+    const turnSuitCounts = countBy(turnBoard.map((card) => card[1]));
+    const riverValue = RANK_VALUES[riverRank];
+    const highTurnValue = Math.max(...turnValues);
+
+    if (turnRanks.includes(riverRank)) return "pair";
+    if ((turnSuitCounts[riverSuit] || 0) >= 3) return "flush-completing";
+    if (riverValue > highTurnValue) return "overcard";
+
+    const values = [...new Set(turnValues.concat(riverValue))].sort((a, b) => a - b);
+    const connected = values.some((value, index) => index + 3 < values.length && values[index + 3] - value <= 4);
+    if (connected) return "straight-connected";
+    return "blank";
+  }
+
   function streetLabel(boardCount) {
     if (boardCount === 0) return "No board";
     if (boardCount === 3) return "Flop";
@@ -106,6 +125,7 @@
     boardTexture,
     deck,
     formatCard,
+    riverRunoutCategory,
     setupStatusLabel,
     streetLabel,
   };

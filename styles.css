@@ -950,6 +950,11 @@ button {
   font-weight: 800;
 }
 
+.size-table .worst-runout td {
+  background: rgba(217, 90, 78, 0.12);
+  color: var(--text);
+}
+
 @media (max-width: 1100px) {
   .workspace {
     grid-template-columns: 1fr 1fr;
