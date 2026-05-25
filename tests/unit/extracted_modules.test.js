@@ -35,6 +35,11 @@ test("cards domain formats cards and labels board state", () => {
   assert.equal(PokerGtoCards.boardKey(["Kd", "As", "2h"]), "2h As Kd");
   assert.equal(PokerGtoCards.boardClass(["As", "Kd", "7c", "2h", "2d"]), "A-high rainbow paired");
   assert.equal(PokerGtoCards.boardTexture(["As", "Ks", "Qs"]), "A-high monotone connected");
+  assert.equal(PokerGtoCards.riverRunoutCategory(["Ah", "8d", "4c", "2h"], "Ad"), "pair");
+  assert.equal(PokerGtoCards.riverRunoutCategory(["Ah", "8h", "4h", "2c"], "Kh"), "flush-completing");
+  assert.equal(PokerGtoCards.riverRunoutCategory(["Qh", "8d", "4c", "2h"], "Kd"), "overcard");
+  assert.equal(PokerGtoCards.riverRunoutCategory(["9h", "8d", "6c", "2h"], "7s"), "straight-connected");
+  assert.equal(PokerGtoCards.riverRunoutCategory(["Ah", "8d", "4c", "2h"], "3s"), "blank");
   assert.equal(PokerGtoCards.streetLabel(4), "Turn");
   assert.equal(PokerGtoCards.activeStreetKey(5), "river");
   assert.equal(PokerGtoCards.setupStatusLabel(["Ah", ""], [], new Set()), "Hero 1/2");

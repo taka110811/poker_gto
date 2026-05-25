@@ -6,6 +6,7 @@ const {
   boardTexture,
   deck,
   formatCard,
+  riverRunoutCategory,
   setupStatusLabel,
   streetLabel,
 } = window.PokerGtoCards;
@@ -115,6 +116,8 @@ const els = {
   turnOopCallFreq: document.querySelector("#turnOopCallFreq"),
   turnEv: document.querySelector("#turnEv"),
   turnBestRiver: document.querySelector("#turnBestRiver"),
+  turnWorstRiver: document.querySelector("#turnWorstRiver"),
+  turnVolatility: document.querySelector("#turnVolatility"),
   turnRangeCap: document.querySelector("#turnRangeCap"),
   turnSolverSettings: document.querySelector("#turnSolverSettings"),
   turnCalcTime: document.querySelector("#turnCalcTime"),
@@ -820,8 +823,11 @@ async function renderTurnSolverAsync(board, deadCards, requestId) {
     return;
   }
 
-  const average = averageTurnResults(results);
-  const best = results.slice().sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
+  const detailedResults = annotateTurnRunouts(results, board);
+  const average = averageTurnResults(detailedResults);
+  const best = detailedResults.slice().sort((a, b) => b.result.oopEv - a.result.oopEv)[0];
+  const worst = detailedResults.slice().sort((a, b) => a.result.oopEv - b.result.oopEv)[0];
+  const volatility = turnResultVolatility(detailedResults);
   const elapsedMs = Math.round(performance.now() - start);
   els.turnStatus.textContent =
     `${runoutCount} runouts / ${solverSettings.iterations} iterations / ` +
@@ -834,13 +840,15 @@ async function renderTurnSolverAsync(board, deadCards, requestId) {
   els.turnOopCallFreq.textContent = pct(average.oopCall);
   els.turnEv.textContent = average.oopEv.toFixed(1);
   els.turnBestRiver.textContent = formatCard(best.riverCard);
+  els.turnWorstRiver.textContent = formatCard(worst.riverCard);
+  els.turnVolatility.textContent = `${volatility.label} ${volatility.score.toFixed(2)}`;
   els.turnRangeCap.textContent = `${solverSettings.turnComboLimit} combos`;
   els.turnSolverSettings.textContent =
     `${solverSettings.iterations} iter / ${solverSettings.turnRunoutLimit} runouts / ` +
     `${solverSettings.turnComboLimit} combos`;
   els.turnCalcTime.textContent = `${elapsedMs} ms`;
   els.turnAccuracy.textContent = `Lite: ${runoutCount}/${solverSettings.turnRunoutLimit} runouts, ${solverSettings.turnComboLimit} combo cap`;
-  renderTurnRunoutRows(results);
+  renderTurnRunoutRows(detailedResults);
 }
 
 function solveRiverCandidates({ board, pot, stack }) {
@@ -953,6 +961,8 @@ function resetTurnSolver(status) {
     els.turnOopCallFreq,
     els.turnEv,
     els.turnBestRiver,
+    els.turnWorstRiver,
+    els.turnVolatility,
     els.turnRangeCap,
     els.turnSolverSettings,
     els.turnCalcTime,
@@ -1038,18 +1048,44 @@ function averageTurnResults(results) {
   );
 }
 
+function annotateTurnRunouts(results, turnBoard) {
+  const average = averageTurnResults(results);
+  return results.map((runout) => ({
+    ...runout,
+    category: riverRunoutCategory(turnBoard, runout.riverCard),
+    evDelta: runout.result.oopEv - average.oopEv,
+    oopBetDelta: runout.result.oopBet - average.oopBet,
+  }));
+}
+
+function turnResultVolatility(results) {
+  if (results.length <= 1) return { label: "Low", score: 0 };
+  const averageEv = results.reduce((sum, runout) => sum + runout.result.oopEv, 0) / results.length;
+  const variance = results.reduce((sum, runout) => sum + (runout.result.oopEv - averageEv) ** 2, 0) / results.length;
+  const score = Math.sqrt(variance);
+  const label = score >= 2 ? "High" : score >= 1 ? "Medium" : "Low";
+  return { label, score };
+}
+
 function renderTurnRunoutRows(results) {
   els.turnRunoutRows.innerHTML = "";
-  results.forEach(({ riverCard, result }) => {
+  const bestEv = Math.max(...results.map(({ result }) => result.oopEv));
+  const worstEv = Math.min(...results.map(({ result }) => result.oopEv));
+  results.forEach(({ category, evDelta, oopBetDelta, riverCard, result }) => {
     const row = document.createElement("tr");
+    if (result.oopEv === bestEv) row.classList.add("best-size");
+    if (result.oopEv === worstEv) row.classList.add("worst-runout");
     row.innerHTML = `
       <td>${formatCard(riverCard)}</td>
+      <td>${category}</td>
       <td>${pct(result.oopBet)}</td>
+      <td>${signedPct(oopBetDelta)}</td>
       <td>${pct(1 - result.oopBet)}</td>
       <td>${pct(result.ipCall)}</td>
       <td>${pct(result.ipProbe)}</td>
       <td>${pct(result.oopCall)}</td>
       <td>${result.oopEv.toFixed(1)}</td>
+      <td>${signedNumber(evDelta)}</td>
     `;
     els.turnRunoutRows.appendChild(row);
   });
@@ -1282,6 +1318,15 @@ function riverAverageUtility(history, oop, ip, board, pot, betSize, infosets) {
 
 function pct(value) {
   return `${Math.round(value * 100)}%`;
+}
+
+function signedPct(value) {
+  const rounded = Math.round(value * 100);
+  return `${rounded >= 0 ? "+" : ""}${rounded}%`;
+}
+
+function signedNumber(value) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
 }
 
 function clamp(value, min, max) {
