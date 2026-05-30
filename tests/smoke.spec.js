@@ -17,6 +17,8 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page).toHaveTitle("Poker GTO Solver Studio");
   await expect(page.getByRole("heading", { name: "Poker GTO Solver Studio" })).toBeVisible();
   await expect(page.getByLabel("Solver configuration").getByText("Approx EV")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Results sections" })).toBeVisible();
+  await expect(page.locator('[data-results-tab="overview"]')).toHaveClass(/active/);
   await expect(page.getByText("Chip EV")).toBeVisible();
   await expect(page.locator(".source-badge", { hasText: "Approx EV" })).toBeVisible();
   await expect(page.locator(".source-badge", { hasText: "Live CFR" })).toBeVisible();
@@ -75,6 +77,8 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await page.locator("#board-2").selectOption("4c");
   await page.locator("#board-3").selectOption("2h");
   await page.locator("#board-4").selectOption("7s");
+  await expect(page.locator('[data-results-tab="river"]')).toHaveClass(/active/);
+  await expect(page.locator('[data-results-tab="overview"]')).not.toHaveClass(/active/);
   await expect(page.getByRole("button", { name: "75% pot" })).toBeVisible();
   await expect(page.locator("#betTreeKey")).toHaveText("river-no-raise-33-75");
   await expect(page.locator("#betTreeAmounts")).toContainText("33% pot 4.0bb");
@@ -144,6 +148,7 @@ test("applies a spot preset and solves the selected street", async ({ page }) =>
   await expect(page.locator("#board-4")).toHaveValue("");
   await expect(page.locator("#streetSummary")).toHaveText("Turn");
   await expect(page.locator("#setupStatus")).toHaveText("Turn計算可能");
+  await expect(page.locator('[data-results-tab="turn"]')).toHaveClass(/active/);
   await expect(page.locator("#rangeFeedback")).toHaveText("BTN vs BB SRP Turn を適用");
   await expect(page.locator("#setupOopRangeSummary")).toContainText("Standard 30%");
   await expect(page.locator("#setupIpRangeSummary")).toContainText("Standard 30%");
@@ -172,6 +177,7 @@ test("applies a preflop setup preset without implying a solved spot", async ({ p
   await expect(page.locator("#hero-0")).toHaveValue("");
   await expect(page.locator("#board-0")).toHaveValue("");
   await expect(page.locator("#streetSummary")).toHaveText("No board");
+  await expect(page.locator('[data-results-tab="overview"]')).toHaveClass(/active/);
   await expect(page.locator("#rangeFeedback")).toHaveText("CO vs BTN 3bet Pot を適用");
   await expect(page.locator("#setupOopRangeSummary")).toContainText("Standard 30%");
   await expect(page.locator("#setupIpRangeSummary")).toContainText("Tight 18%");
@@ -390,6 +396,7 @@ test("keeps the solver workspace usable on mobile width", async ({ page }) => {
   await expect(page.locator("#streetSummary")).toHaveText("Flop");
   await expect(page.locator("#setupStatus")).toHaveText("Flop計算可能");
   await expect(page.locator("#flopPanel")).toHaveClass(/is-active/);
+  await expect(page.locator('[data-results-tab="flop"]')).toHaveClass(/active/);
   await expect(page.locator("#turnPanel")).toHaveClass(/is-inactive/);
   await expect(page.locator('.view-nav a[href="#flopPanel"]')).toHaveClass(/active/);
 
