@@ -772,18 +772,7 @@ function addSolveHistory(bestAction, equityValue, decision) {
     board: knownBoard.map(formatCard).join(" ") || "No board",
     equity: pct(equityValue),
     hero: hero.filter(Boolean).map(formatCard).join(" "),
-    input: {
-      betSize: els.betSize.value,
-      board: board.slice(),
-      hero: hero.slice(),
-      ipPreset: els.ipPreset.value,
-      oopPreset: els.oopPreset.value,
-      position: els.position.value,
-      pot: els.pot.value,
-      stack: els.stack.value,
-      toCall: els.toCall.value,
-      villainRange: els.villainRange.value,
-    },
+    input: currentInputSnapshot(hero, board),
     source: strategySourceLabel(knownBoard.length),
     spr: decision.spr.toFixed(1),
     street: streetLabel(knownBoard.length),
@@ -792,32 +781,51 @@ function addSolveHistory(bestAction, equityValue, decision) {
   renderSolveHistory();
 }
 
+function currentInputSnapshot(hero, board) {
+  return {
+    betSize: els.betSize.value,
+    board: board.slice(),
+    hero: hero.slice(),
+    ipPreset: els.ipPreset.value,
+    oopPreset: els.oopPreset.value,
+    position: els.position.value,
+    pot: els.pot.value,
+    stack: els.stack.value,
+    toCall: els.toCall.value,
+    villainRange: els.villainRange.value,
+  };
+}
+
 function renderSolveHistory() {
   els.solveHistoryCount.textContent = `${solveHistory.length} ${solveHistory.length === 1 ? "spot" : "spots"}`;
   els.clearSolveHistory.disabled = solveHistory.length === 0;
   els.solveHistoryEmpty.hidden = solveHistory.length > 0;
   els.solveHistoryList.innerHTML = "";
   solveHistory.forEach((entry) => {
-    const item = document.createElement("div");
-    const head = document.createElement("div");
-    const street = document.createElement("span");
-    const action = document.createElement("strong");
-    const spot = document.createElement("small");
-    const source = document.createElement("small");
-    const applyButton = document.createElement("button");
-    item.className = "solve-history-item";
-    applyButton.className = "secondary solve-history-apply";
-    applyButton.type = "button";
-    applyButton.textContent = "Apply";
-    applyButton.addEventListener("click", () => applySolveHistoryEntry(entry));
-    street.textContent = entry.street;
-    action.textContent = entry.action;
-    spot.textContent = `${entry.hero} / ${entry.board} / ${entry.equity} equity / SPR ${entry.spr}`;
-    source.textContent = entry.source;
-    head.append(street, action);
-    item.append(head, spot, source, applyButton);
-    els.solveHistoryList.appendChild(item);
+    els.solveHistoryList.appendChild(createSolveHistoryItem(entry));
   });
+}
+
+function createSolveHistoryItem(entry) {
+  const item = document.createElement("div");
+  const head = document.createElement("div");
+  const street = document.createElement("span");
+  const action = document.createElement("strong");
+  const spot = document.createElement("small");
+  const source = document.createElement("small");
+  const applyButton = document.createElement("button");
+  item.className = "solve-history-item";
+  applyButton.className = "secondary solve-history-apply";
+  applyButton.type = "button";
+  applyButton.textContent = "Apply";
+  applyButton.addEventListener("click", () => applySolveHistoryEntry(entry));
+  street.textContent = entry.street;
+  action.textContent = entry.action;
+  spot.textContent = `${entry.hero} / ${entry.board} / ${entry.equity} equity / SPR ${entry.spr}`;
+  source.textContent = entry.source;
+  head.append(street, action);
+  item.append(head, spot, source, applyButton);
+  return item;
 }
 
 function clearSolveHistory() {
@@ -826,7 +834,15 @@ function clearSolveHistory() {
 }
 
 function applySolveHistoryEntry(entry) {
-  const input = entry.input;
+  applyInputSnapshot(entry.input);
+  setRangeFeedback(`${entry.street} history を適用`);
+  sync();
+  resetActiveSolverForBoard(entry.input.board.filter(Boolean).length);
+  updateSpotCards();
+  updatePreflopSpotCards();
+}
+
+function applyInputSnapshot(input) {
   els.spotPreset.value = "";
   els.preflopSpot.value = "";
   els.position.value = input.position;
@@ -843,11 +859,6 @@ function applySolveHistoryEntry(entry) {
   rangeState.ip = makePresetRange(input.ipPreset);
   invalidateSolverCache();
   renderBetSizeButtons();
-  setRangeFeedback(`${entry.street} history を適用`);
-  sync();
-  resetActiveSolverForBoard(input.board.filter(Boolean).length);
-  updateSpotCards();
-  updatePreflopSpotCards();
 }
 
 function resetActiveSolverForBoard(boardCount) {
