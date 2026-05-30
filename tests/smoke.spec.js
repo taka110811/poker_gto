@@ -40,6 +40,7 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#rangeEditor")).toHaveClass(/is-collapsed/);
   await expect(page.locator("#rangeSummary")).toContainText("OOP Range");
   await expect(page.getByLabel("Recent solves")).toContainText("0 spots");
+  await expect(page.locator("#clearSolveHistory")).toBeDisabled();
   await expect(page.locator("#solveHistoryEmpty")).toBeVisible();
   await expect(page.getByLabel("Setup range summary")).toContainText("OOP");
   await expect(page.locator("#setupOopRangeSummary")).toContainText("Standard 30%");
@@ -113,6 +114,7 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#precomputedActionRows tr")).toHaveCount(3);
   await expect(page.locator("#precomputedActionRows")).toContainText("Bet");
   await expect(page.locator("#solveHistoryCount")).toHaveText("1 spot");
+  await expect(page.locator("#clearSolveHistory")).toBeEnabled();
   await expect(page.locator("#solveHistoryEmpty")).toBeHidden();
   await expect(page.locator("#solveHistoryList .solve-history-item")).toHaveCount(1);
   await expect(page.locator("#solveHistoryList .solve-history-item").first()).toContainText("River");
@@ -132,6 +134,11 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#board-4")).toHaveValue("7s");
   await expect(page.locator("#rangeFeedback")).toHaveText("River history を適用");
   await expect(page.locator("#riverStatus")).toHaveText("Solveで再計算");
+  await page.locator("#clearSolveHistory").click();
+  await expect(page.locator("#solveHistoryCount")).toHaveText("0 spots");
+  await expect(page.locator("#clearSolveHistory")).toBeDisabled();
+  await expect(page.locator("#solveHistoryEmpty")).toBeVisible();
+  await expect(page.locator("#solveHistoryList .solve-history-item")).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });
 

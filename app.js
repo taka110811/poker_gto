@@ -130,6 +130,7 @@ const els = {
   raisePct: document.querySelector("#raisePct"),
   callPct: document.querySelector("#callPct"),
   foldPct: document.querySelector("#foldPct"),
+  clearSolveHistory: document.querySelector("#clearSolveHistory"),
   solveHistoryCount: document.querySelector("#solveHistoryCount"),
   solveHistoryEmpty: document.querySelector("#solveHistoryEmpty"),
   solveHistoryList: document.querySelector("#solveHistoryList"),
@@ -793,6 +794,7 @@ function addSolveHistory(bestAction, equityValue, decision) {
 
 function renderSolveHistory() {
   els.solveHistoryCount.textContent = `${solveHistory.length} ${solveHistory.length === 1 ? "spot" : "spots"}`;
+  els.clearSolveHistory.disabled = solveHistory.length === 0;
   els.solveHistoryEmpty.hidden = solveHistory.length > 0;
   els.solveHistoryList.innerHTML = "";
   solveHistory.forEach((entry) => {
@@ -816,6 +818,11 @@ function renderSolveHistory() {
     item.append(head, spot, source, applyButton);
     els.solveHistoryList.appendChild(item);
   });
+}
+
+function clearSolveHistory() {
+  solveHistory.length = 0;
+  renderSolveHistory();
 }
 
 function applySolveHistoryEntry(entry) {
@@ -1795,6 +1802,7 @@ function init() {
     button.addEventListener("click", () => toggleBetSize(button.dataset.size));
   });
   els.applyPracticeSpot.addEventListener("click", applyPracticeSpot);
+  els.clearSolveHistory.addEventListener("click", clearSolveHistory);
   els.runSimulation.addEventListener("click", simulate);
   els.randomDeal.addEventListener("click", randomDeal);
   els.clearCards.addEventListener("click", clearCards);
