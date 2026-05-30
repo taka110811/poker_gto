@@ -117,10 +117,21 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#solveHistoryList .solve-history-item")).toHaveCount(1);
   await expect(page.locator("#solveHistoryList .solve-history-item").first()).toContainText("River");
   await expect(page.locator("#solveHistoryList .solve-history-item").first()).toContainText("Approx EV + River Mini Solver");
+  await expect(page.locator("#solveHistoryList .solve-history-item").first().getByRole("button", { name: "Apply" })).toBeVisible();
   await page.getByRole("button", { name: "Solve Spot" }).click();
   await expect(page.locator("#riverStatus")).toContainText("cached");
   await expect(page.locator("#solveHistoryCount")).toHaveText("2 spots");
   await expect(page.locator("#solveHistoryList .solve-history-item")).toHaveCount(2);
+  await page.locator("#hero-0").selectOption("As");
+  await page.locator("#board-0").selectOption("Kd");
+  await expect(page.locator("#hero-0")).toHaveValue("As");
+  await page.locator("#solveHistoryList .solve-history-item").first().getByRole("button", { name: "Apply" }).click();
+  await expect(page.locator("#hero-0")).toHaveValue("Kh");
+  await expect(page.locator("#hero-1")).toHaveValue("Qd");
+  await expect(page.locator("#board-0")).toHaveValue("Ah");
+  await expect(page.locator("#board-4")).toHaveValue("7s");
+  await expect(page.locator("#rangeFeedback")).toHaveText("River history を適用");
+  await expect(page.locator("#riverStatus")).toHaveText("Solveで再計算");
   expect(pageErrors).toEqual([]);
 });
 
