@@ -494,6 +494,10 @@
               <span><strong>Probe</strong> OOP check後のIP bet</span>
               <span><strong>OOP call vs IP bet</strong> probeへのcall頻度</span>
             </div>
+            <details class="method-help" aria-label="River solver method">
+              <summary>Method / accuracy</summary>
+              <p>Riverは小さいCFR風treeをLive計算します。Raiseなし、固定bet size候補、combo cap付きの学習用近似です。</p>
+            </details>
           </div>
           <div class="street-panel-actions">
             <span id="riverStatus">Waiting for river</span>
@@ -585,6 +589,10 @@
               <span><strong>Volatility</strong> river候補でEVや頻度が動く幅</span>
               <span><strong>Accuracy</strong> runout数とcombo capの近似条件</span>
             </div>
+            <details class="method-help" aria-label="Turn solver method">
+              <summary>Method / accuracy</summary>
+              <p>Turnは候補Riverを上限付きで列挙し、各runoutをRiver Mini Solverで解いた平均です。Turn全体のCFRではありません。</p>
+            </details>
           </div>
           <div class="street-panel-actions">
             <span id="turnStatus">Waiting for turn</span>
@@ -690,6 +698,10 @@
               <span><strong>Range advantage</strong> OOP/IP range scoreの差</span>
               <span><strong>Runout volatility</strong> turn候補でadvantageが動く幅</span>
             </div>
+            <details class="method-help" aria-label="Flop solver method">
+              <summary>Method / accuracy</summary>
+              <p>Flopはtexture、range score、Turn候補の変化から簡易strategyを出します。CFRではなくheuristicです。</p>
+            </details>
           </div>
           <div class="street-panel-actions">
             <span id="flopStatus">Waiting for flop</span>

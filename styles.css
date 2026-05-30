@@ -781,6 +781,23 @@ button {
   color: var(--text);
 }
 
+.method-help {
+  margin: -2px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.method-help summary {
+  cursor: pointer;
+  color: #c9e4f8;
+  font-weight: 800;
+}
+
+.method-help p {
+  margin-top: 6px;
+}
+
 .precomputed-box dl {
   display: grid;
   gap: 10px;
@@ -1413,6 +1430,7 @@ button {
   .street-panel.is-collapsed .matrix-head p,
   .street-panel.is-collapsed .source-note,
   .street-panel.is-collapsed .terms-row,
+  .street-panel.is-collapsed .method-help,
   .street-panel.is-collapsed .bet-tree,
   .street-panel.is-collapsed .river-grid,
   .street-panel.is-collapsed .size-table-wrap {
