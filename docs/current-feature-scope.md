@@ -27,6 +27,7 @@
 - Hero positionを選択できる。
 - Villain rangeを Tight / Standard / Wide / Any two から選択できる。
 - Pot、To call、Effective stack、Bet sizeを入力できる。
+- Preflop Spot Browserから代表的なプリフロップspotのposition、range、pot、stackを反映できる。
 - Hero cardsを2枚選択できる。
 - Board cardsを最大5枚選択できる。
 - `Random spot` でカードを自動入力できる。
@@ -37,6 +38,7 @@
 Solver全体の入力パネル。
 現状では、Preflop / Flop / Turn / Riverの入力が同じBoard入力欄に集約されている。
 Board枚数によって、Flop / Turn / Riverのどのパネルが有効になるかが変わる。
+Preflop Spot Browserはsetup presetであり、プリフロップのGTO solutionを表示するものではない。
 
 ### Poker Table表示
 
@@ -174,7 +176,7 @@ Range advantage、board texture、turn sampleの変動から、学習用の簡�
 - Turn streetの厳密なCFR計算。
 - Flop streetの厳密なCFR計算。
 - 実戦的なGTO Wizard相当の巨大precomputed solution browser。
-- プリフロップspot選択から、range / pot / stack / positionを自動prefillすること。
+- プリフロップspotごとのGTO solutionを表示すること。
 - ハンド履歴を読み込み、実プレイとsolver推奨を比較すること。
 - EV lossやstudy reportを出すこと。
 
@@ -255,12 +257,12 @@ UIには `OOP`, `IP`, `Probe`, `Runout volatility`, `Accuracy` などの専門�
 - 日本語UIラベルに寄せるか、英語ラベル + 日本語説明にする。
 - `Probe` などの用語は「IP bet vs check」のように行動ベースで統一する。
 
-## #8へ進む前の整理ポイント
+## #8以降の整理ポイント
 
-Preflop Spot Browserへ進む前に、以下を前提として明確にする。
+Preflop Spot Browserでは、以下を前提として明確にする。
 
 - 現状の強い計算ロジックはRiver Mini Solver。
 - TurnとFlopはLite近似であり、本格solverではない。
 - Precomputed DBはRiver中心の小規模サンプル。
-- #8では、代表的なプリフロップspotからrange / pot / stack / positionをprefillすることを主目的にする。
-- #8では、全spotに完全なGTO solutionがあるように見せないUIにする。
+- 代表的なプリフロップspotからrange / pot / stack / positionをprefillすることを主目的にする。
+- 全spotに完全なGTO solutionがあるように見せないUIにする。

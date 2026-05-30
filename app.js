@@ -19,6 +19,7 @@ const {
 } = window.PokerGtoRanges;
 const { betTreeKey, precomputedQuery } = window.PokerGtoSpots;
 let spotPresets = {};
+let preflopSpots = {};
 const rangeState = {
   activeSide: "oop",
   editorOpen: false,
@@ -52,6 +53,10 @@ let solverRequestId = 0;
 
 const els = {
   spotPreset: document.querySelector("#spotPreset"),
+  preflopSpot: document.querySelector("#preflopSpot"),
+  preflopSpotCount: document.querySelector("#preflopSpotCount"),
+  preflopSpotCards: document.querySelector("#preflopSpotCards"),
+  preflopSpotStatus: document.querySelector("#preflopSpotStatus"),
   spotBrowserCount: document.querySelector("#spotBrowserCount"),
   spotCards: document.querySelector("#spotCards"),
   spotStreetFilter: document.querySelector("#spotStreetFilter"),
@@ -261,6 +266,56 @@ async function loadSpotPresets() {
   } catch (error) {
     console.error(error);
     setRangeFeedback("Spot presets unavailable");
+  }
+}
+
+async function loadPreflopSpots() {
+  try {
+    preflopSpots = await window.PokerGtoPreflopSpots.loadPreflopSpots("./data/preflop_spots.json");
+    renderPreflopSpots();
+  } catch (error) {
+    console.error(error);
+    els.preflopSpotStatus.textContent = "Preflop setups unavailable";
+  }
+}
+
+function renderPreflopSpots() {
+  const entries = Object.entries(preflopSpots);
+  els.preflopSpot.innerHTML = '<option value="">Custom preflop setup</option>';
+  els.preflopSpotCards.innerHTML = "";
+  els.preflopSpotCount.textContent = `${entries.length} setups`;
+
+  entries.forEach(([key, spot]) => {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = spot.name;
+    els.preflopSpot.appendChild(option);
+
+    const button = document.createElement("button");
+    button.className = "spot-card";
+    button.type = "button";
+    button.dataset.preflopSpot = key;
+    button.innerHTML = `
+      <span>Preflop</span>
+      <strong>${spot.spot}</strong>
+      <small>${spot.note}</small>
+      <b>${spot.stack}bb stack / ${spot.pot}bb pot</b>
+    `;
+    button.addEventListener("click", () => {
+      els.preflopSpot.value = key;
+      applyPreflopSpot(key);
+    });
+    els.preflopSpotCards.appendChild(button);
+  });
+  updatePreflopSpotCards();
+}
+
+function updatePreflopSpotCards() {
+  els.preflopSpotCards.querySelectorAll(".spot-card").forEach((button) => {
+    button.classList.toggle("active", button.dataset.preflopSpot === els.preflopSpot.value);
+  });
+  if (!els.preflopSpot.value) {
+    els.preflopSpotStatus.textContent = "代表的なプリフロップspotから入力だけを反映します。";
   }
 }
 
@@ -1434,6 +1489,7 @@ function applyPracticeSpot() {
   }
 
   els.spotPreset.value = "";
+  els.preflopSpot.value = "";
   els.position.value = els.practicePosition.value;
   els.pot.value = els.practicePot.value;
   els.toCall.value = els.practiceFacingAmount.value;
@@ -1442,6 +1498,7 @@ function applyPracticeSpot() {
   setCardSelects(els.heroCards, hero);
   setCardSelects(els.boardCards, board.concat(["", ""]));
   updateSpotCards();
+  updatePreflopSpotCards();
   invalidateSolverCache();
   renderBetSizeButtons();
   sync();
@@ -1456,7 +1513,9 @@ function randomDeal() {
     select.value = cards[index];
   });
   els.spotPreset.value = "";
+  els.preflopSpot.value = "";
   updateSpotCards();
+  updatePreflopSpotCards();
   sync();
 }
 
@@ -1465,7 +1524,9 @@ function clearCards() {
     select.value = "";
   });
   els.spotPreset.value = "";
+  els.preflopSpot.value = "";
   updateSpotCards();
+  updatePreflopSpotCards();
   sync();
 }
 
@@ -1482,6 +1543,7 @@ function applySpotPreset(presetKey) {
     return;
   }
 
+  els.preflopSpot.value = "";
   els.position.value = preset.position;
   els.villainRange.value = preset.villainRange;
   els.oopPreset.value = preset.oopPreset;
@@ -1498,6 +1560,36 @@ function applySpotPreset(presetKey) {
   setRangeFeedback(`${preset.name} を適用`);
   sync();
   updateSpotCards();
+  updatePreflopSpotCards();
+}
+
+function applyPreflopSpot(spotKey) {
+  const spot = preflopSpots[spotKey];
+  if (!spot) {
+    updatePreflopSpotCards();
+    return;
+  }
+
+  els.spotPreset.value = "";
+  els.position.value = spot.position;
+  els.villainRange.value = spot.villainRange;
+  els.oopPreset.value = spot.oopPreset;
+  els.ipPreset.value = spot.ipPreset;
+  els.pot.value = spot.pot;
+  els.toCall.value = spot.toCall;
+  els.stack.value = spot.stack;
+  els.betSize.value = spot.betSize;
+  setCardSelects(els.heroCards, ["", ""]);
+  setCardSelects(els.boardCards, ["", "", "", "", ""]);
+  rangeState.oop = makePresetRange(spot.oopPreset);
+  rangeState.ip = makePresetRange(spot.ipPreset);
+  invalidateSolverCache();
+  renderBetSizeButtons();
+  setRangeFeedback(`${spot.name} を適用`);
+  els.preflopSpotStatus.textContent = `${spot.name} を入力に反映しました。solutionは含まないsetup presetです。`;
+  sync();
+  updateSpotCards();
+  updatePreflopSpotCards();
 }
 
 function init() {
@@ -1506,19 +1598,24 @@ function init() {
   [els.position, els.villainRange, els.pot, els.toCall, els.stack, els.betSize].forEach((el) => {
     el.addEventListener("input", () => {
       els.spotPreset.value = "";
+      els.preflopSpot.value = "";
       updateSpotCards();
+      updatePreflopSpotCards();
       invalidateSolverCache();
       renderBetSizeButtons();
       sync();
     });
     el.addEventListener("change", () => {
       els.spotPreset.value = "";
+      els.preflopSpot.value = "";
       updateSpotCards();
+      updatePreflopSpotCards();
       invalidateSolverCache();
       renderBetSizeButtons();
       sync();
     });
   });
+  els.preflopSpot.addEventListener("change", () => applyPreflopSpot(els.preflopSpot.value));
   els.oopRangeTab.addEventListener("click", () => setActiveRange("oop"));
   els.ipRangeTab.addEventListener("click", () => setActiveRange("ip"));
   els.rangeFrequencyButtons.forEach((button) => {
@@ -1551,6 +1648,7 @@ function init() {
   renderRangeFrequencyPalette();
   renderBetSizeButtons();
   void loadSpotPresets();
+  void loadPreflopSpots();
   void loadPrecomputedSpots();
   sync();
 }

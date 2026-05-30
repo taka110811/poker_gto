@@ -17,6 +17,7 @@ python3 -m http.server 4173
 - Monte CarloでHero equityを近似計算
 - Equity、pot odds、SPR、ポジション補正から Raise / Call / Fold の頻度を提示
 - プリフロップレンジマトリクスを表示
+- Preflop Spot Browserで代表的なプリフロップspotの入力をprefill
 - River Mini Solver、Turn Solver Lite、Flop Solver Liteを表示
 - SQLiteの事前計算済みspotをブラウザで参照
 
