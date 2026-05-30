@@ -50,6 +50,13 @@ const precomputedStore = window.PokerGtoPrecomputedStore.createSqlitePrecomputed
 let riverRequestId = 0;
 let turnRequestId = 0;
 let solverRequestId = 0;
+const streetPanelState = {
+  collapsed: {
+    flop: false,
+    turn: false,
+    river: false,
+  },
+};
 
 const els = {
   spotPreset: document.querySelector("#spotPreset"),
@@ -87,6 +94,7 @@ const els = {
   setupIpRangeSummary: document.querySelector("#setupIpRangeSummary"),
   setupRangeStatus: document.querySelector("#setupRangeStatus"),
   resultsTabs: document.querySelectorAll("[data-results-tab]"),
+  streetToggles: document.querySelectorAll("[data-street-toggle]"),
   rangeMatrix: document.querySelector("#rangeMatrix"),
   comboCount: document.querySelector("#comboCount"),
   rangeEditor: document.querySelector("#rangeEditor"),
@@ -246,8 +254,10 @@ function updateStreetPanels(boardCount) {
   const activeStreet = activeStreetKey(boardCount);
   document.querySelectorAll("[data-street-panel]").forEach((panel) => {
     const active = panel.dataset.streetPanel === activeStreet;
+    if (active) streetPanelState.collapsed[panel.dataset.streetPanel] = false;
     panel.classList.toggle("is-active", active);
     panel.classList.toggle("is-inactive", !active);
+    panel.classList.toggle("is-collapsed", streetPanelState.collapsed[panel.dataset.streetPanel]);
   });
   document.querySelectorAll(".view-nav a").forEach((link) => {
     const target = link.getAttribute("href") || "";
@@ -258,6 +268,7 @@ function updateStreetPanels(boardCount) {
     link.classList.toggle("active", active);
   });
   updateResultsTabs(activeStreet);
+  renderStreetPanelToggles();
 }
 
 function updateResultsTabs(activeStreet) {
@@ -265,6 +276,27 @@ function updateResultsTabs(activeStreet) {
   els.resultsTabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.resultsTab === activeTab);
   });
+}
+
+function setStreetPanelCollapsed(street, collapsed) {
+  if (!streetPanelState.collapsed.hasOwnProperty(street)) return;
+  streetPanelState.collapsed[street] = collapsed;
+  const panel = document.querySelector(`[data-street-panel="${street}"]`);
+  if (panel) panel.classList.toggle("is-collapsed", collapsed);
+  renderStreetPanelToggles();
+}
+
+function renderStreetPanelToggles() {
+  els.streetToggles.forEach((button) => {
+    const street = button.dataset.streetToggle;
+    const collapsed = streetPanelState.collapsed[street];
+    button.textContent = collapsed ? "Expand" : "Collapse";
+    button.setAttribute("aria-expanded", String(!collapsed));
+  });
+}
+
+function expandStreetPanel(street) {
+  if (street) setStreetPanelCollapsed(street, false);
 }
 
 function updateSpotCards() {
@@ -644,6 +676,7 @@ function simulate() {
 
 function scrollToSolveResult(boardCount) {
   const activeStreet = activeStreetKey(boardCount);
+  expandStreetPanel(activeStreet);
   const target =
     document.querySelector(`[data-street-panel="${activeStreet}"]`) ||
     document.querySelector("#resultsPanel");
@@ -1661,6 +1694,12 @@ function init() {
     applyPreset("ip", els.villainRange.value);
   });
   els.toggleRangeEditor.addEventListener("click", toggleRangeEditor);
+  els.streetToggles.forEach((button) => {
+    button.addEventListener("click", () => {
+      const street = button.dataset.streetToggle;
+      setStreetPanelCollapsed(street, !streetPanelState.collapsed[street]);
+    });
+  });
   els.sizeButtons.forEach((button) => {
     button.addEventListener("click", () => toggleBetSize(button.dataset.size));
   });
