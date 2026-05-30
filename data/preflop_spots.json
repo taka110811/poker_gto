@@ -1,0 +1,46 @@
+{
+  "spots": [
+    {
+      "id": "btn-bb-srp-preflop",
+      "name": "BTN vs BB SRP 100bb",
+      "spot": "BTN vs BB SRP",
+      "position": "BTN",
+      "villainRange": "standard",
+      "oopPreset": "standard",
+      "ipPreset": "standard",
+      "pot": 4.5,
+      "toCall": 1,
+      "stack": 100,
+      "betSize": 2.5,
+      "note": "Setup preset only"
+    },
+    {
+      "id": "co-btn-3bet-preflop",
+      "name": "CO vs BTN 3bet Pot",
+      "spot": "CO vs BTN 3bet",
+      "position": "CO",
+      "villainRange": "tight",
+      "oopPreset": "standard",
+      "ipPreset": "tight",
+      "pot": 20,
+      "toCall": 7.5,
+      "stack": 92.5,
+      "betSize": 15,
+      "note": "Setup preset only"
+    },
+    {
+      "id": "sb-bb-bvb-preflop",
+      "name": "SB vs BB BvB 100bb",
+      "spot": "SB vs BB BvB",
+      "position": "SB",
+      "villainRange": "wide",
+      "oopPreset": "wide",
+      "ipPreset": "wide",
+      "pot": 5,
+      "toCall": 1.5,
+      "stack": 100,
+      "betSize": 3,
+      "note": "Setup preset only"
+    }
+  ]
+}

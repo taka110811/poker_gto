@@ -22,6 +22,8 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator(".source-badge", { hasText: "Live CFR" })).toBeVisible();
   await expect(page.locator(".source-badge", { hasText: "Precomputed DB" })).toBeVisible();
   await expect(page.getByText("Solved Spot Reference")).toBeVisible();
+  await expect(page.getByText("Preflop Spot Browser")).toBeVisible();
+  await expect(page.locator("#preflopSpotCount")).toHaveText("3 setups");
   await expect(page.getByRole("button", { name: "OOP Range" })).toBeVisible();
   await expect(page.getByRole("button", { name: "IP Range" })).toBeVisible();
   await expect(page.locator("#rangeEditor")).toHaveClass(/is-collapsed/);
@@ -137,18 +139,44 @@ test("applies a spot preset and solves the selected street", async ({ page }) =>
   expect(pageErrors).toEqual([]);
 });
 
+test("applies a preflop setup preset without implying a solved spot", async ({ page }) => {
+  const pageErrors = collectPageErrors(page);
+
+  await page.goto("/?testMode=1");
+
+  await page.locator("#preflopSpot").selectOption("co-btn-3bet-preflop");
+
+  await expect(page.locator("#position")).toHaveValue("CO");
+  await expect(page.locator("#villainRange")).toHaveValue("tight");
+  await expect(page.locator("#oopPreset")).toHaveValue("standard");
+  await expect(page.locator("#ipPreset")).toHaveValue("tight");
+  await expect(page.locator("#pot")).toHaveValue("20");
+  await expect(page.locator("#toCall")).toHaveValue("7.5");
+  await expect(page.locator("#stack")).toHaveValue("92.5");
+  await expect(page.locator("#betSize")).toHaveValue("15");
+  await expect(page.locator("#hero-0")).toHaveValue("");
+  await expect(page.locator("#board-0")).toHaveValue("");
+  await expect(page.locator("#streetSummary")).toHaveText("No board");
+  await expect(page.locator("#rangeFeedback")).toHaveText("CO vs BTN 3bet Pot を適用");
+  await expect(page.locator("#preflopSpotStatus")).toContainText("setup preset");
+  await expect(page.locator('#preflopSpotCards .spot-card[data-preflop-spot="co-btn-3bet-preflop"]')).toHaveClass(/active/);
+  await expect(page.locator("#spotPreset")).toHaveValue("");
+
+  expect(pageErrors).toEqual([]);
+});
+
 test("applies spot browser cards and highlights the active preset", async ({ page }) => {
   const pageErrors = collectPageErrors(page);
 
   await page.goto("/?testMode=1");
 
-  const turnCard = page.locator('.spot-card[data-preset="btn-bb-srp-turn"]');
-  const wetFlopCard = page.locator('.spot-card[data-preset="btn-bb-wet-flop"]');
-  const monotoneCard = page.locator('.spot-card[data-preset="btn-bb-srp-flop-monotone"]');
+  const turnCard = page.locator('#spotCards .spot-card[data-preset="btn-bb-srp-turn"]');
+  const wetFlopCard = page.locator('#spotCards .spot-card[data-preset="btn-bb-wet-flop"]');
+  const monotoneCard = page.locator('#spotCards .spot-card[data-preset="btn-bb-srp-flop-monotone"]');
 
   await expect(turnCard).toContainText("Turn");
   await expect(turnCard).toContainText("BTN vs BB SRP");
-  await expect(page.locator(".spot-card")).toHaveCount(15);
+  await expect(page.locator("#spotCards .spot-card")).toHaveCount(15);
   await turnCard.click();
   await expect(page.locator("#spotPreset")).toHaveValue("btn-bb-srp-turn");
   await expect(turnCard).toHaveClass(/active/);
@@ -177,24 +205,24 @@ test("filters spot browser cards by street and texture", async ({ page }) => {
 
   await page.goto("/?testMode=1");
 
-  await expect(page.locator(".spot-card")).toHaveCount(15);
+  await expect(page.locator("#spotCards .spot-card")).toHaveCount(15);
   await expect(page.locator("#spotBrowserCount")).toHaveText("15 spots");
 
   await page.locator("#spotStreetFilter").selectOption("Flop");
-  await expect(page.locator(".spot-card")).toHaveCount(6);
+  await expect(page.locator("#spotCards .spot-card")).toHaveCount(6);
   await expect(page.locator("#spotBrowserCount")).toHaveText("6 Flop spots");
-  await expect(page.locator('.spot-card[data-preset="btn-bb-srp-turn"]')).toHaveCount(0);
+  await expect(page.locator('#spotCards .spot-card[data-preset="btn-bb-srp-turn"]')).toHaveCount(0);
 
   await page.locator("#spotTextureFilter").selectOption("monotone");
-  await expect(page.locator(".spot-card")).toHaveCount(1);
-  await expect(page.locator('.spot-card[data-preset="btn-bb-srp-flop-monotone"]')).toBeVisible();
+  await expect(page.locator("#spotCards .spot-card")).toHaveCount(1);
+  await expect(page.locator('#spotCards .spot-card[data-preset="btn-bb-srp-flop-monotone"]')).toBeVisible();
 
   await page.locator("#spotStreetFilter").selectOption("River");
-  await expect(page.locator(".spot-card")).toHaveCount(0);
+  await expect(page.locator("#spotCards .spot-card")).toHaveCount(0);
   await expect(page.locator("#spotBrowserCount")).toHaveText("0 spots");
 
   await page.locator("#spotTextureFilter").selectOption("all");
-  await expect(page.locator(".spot-card")).toHaveCount(5);
+  await expect(page.locator("#spotCards .spot-card")).toHaveCount(5);
   await expect(page.locator("#spotBrowserCount")).toHaveText("5 River spots");
 
   expect(pageErrors).toEqual([]);

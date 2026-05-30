@@ -108,6 +108,21 @@
           </div>
 
           <label class="field">
+            <span>Preflop spot</span>
+            <select id="preflopSpot">
+              <option value="">Custom preflop setup</option>
+            </select>
+          </label>
+          <div class="spot-browser preflop-browser" aria-label="Preflop Spot Browser">
+            <div class="section-heading">
+              <div class="section-title">Preflop Spot Browser</div>
+              <span id="preflopSpotCount" class="source-badge">0 setups</span>
+            </div>
+            <div id="preflopSpotCards" class="spot-cards"></div>
+            <p id="preflopSpotStatus" class="practice-status">代表的なプリフロップspotから入力だけを反映します。</p>
+          </div>
+
+          <label class="field">
             <span>Spot preset</span>
             <select id="spotPreset">
               <option value="">Custom spot</option>
@@ -661,6 +676,7 @@
     <script src="./src/domain/spots.js"></script>
     <script src="./src/domain/spotFilters.js"></script>
     <script src="./src/data/spotPresets.js"></script>
+    <script src="./src/data/preflopSpots.js"></script>
     <script src="./src/data/precomputedStore.js"></script>
     <script src="./src/solver/solverCache.js"></script>
     <script src="./src/solver/solverClient.js"></script>
