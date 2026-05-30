@@ -83,6 +83,9 @@ const els = {
   potDisplay: document.querySelector("#potDisplay"),
   setupStatus: document.querySelector("#setupStatus"),
   streetSummary: document.querySelector("#streetSummary"),
+  setupOopRangeSummary: document.querySelector("#setupOopRangeSummary"),
+  setupIpRangeSummary: document.querySelector("#setupIpRangeSummary"),
+  setupRangeStatus: document.querySelector("#setupRangeStatus"),
   rangeMatrix: document.querySelector("#rangeMatrix"),
   comboCount: document.querySelector("#comboCount"),
   rangeEditor: document.querySelector("#rangeEditor"),
@@ -392,6 +395,17 @@ function renderRangeSummary(activeRange) {
   els.rangeComboDetail.textContent = summary.combos.toFixed(0);
   els.rangeActiveHands.textContent = String(summary.activeHands);
   els.rangeAverageFreq.textContent = pct(summary.averageFrequency);
+  renderSetupRangeSummary();
+}
+
+function setupRangeLine(side, presetKey) {
+  const summary = rangeSummary(rangeState[side]);
+  return `${rangeLabels[presetKey]} / ${summary.activeHands} hands / ${summary.combos.toFixed(0)} combos`;
+}
+
+function renderSetupRangeSummary() {
+  els.setupOopRangeSummary.textContent = setupRangeLine("oop", els.oopPreset.value);
+  els.setupIpRangeSummary.textContent = setupRangeLine("ip", els.ipPreset.value);
 }
 
 function paintRangeFrequency(code, options = {}) {
@@ -423,6 +437,9 @@ function renderRangeFrequencyPalette() {
 
 function setRangeFeedback(message) {
   els.rangeFeedback.textContent = message;
+  els.setupRangeStatus.textContent = message.includes("表示中")
+    ? "Range変更後はSolveで再計算します。"
+    : `${message}。Solveで再計算します。`;
 }
 
 function renderRangeEditorToggle() {

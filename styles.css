@@ -242,6 +242,52 @@ p {
   line-height: 1.45;
 }
 
+.setup-range-summary {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.setup-range-summary .section-heading {
+  margin-bottom: 0;
+}
+
+.setup-range-summary a {
+  color: #c7f2df;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.setup-range-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.setup-range-grid div {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #12181c;
+}
+
+.setup-range-grid span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.setup-range-grid strong {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .spot-browser {
   margin-bottom: 14px;
 }

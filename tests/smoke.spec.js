@@ -34,6 +34,10 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.getByRole("button", { name: "IP Range" })).toBeVisible();
   await expect(page.locator("#rangeEditor")).toHaveClass(/is-collapsed/);
   await expect(page.locator("#rangeSummary")).toContainText("OOP Range");
+  await expect(page.getByLabel("Setup range summary")).toContainText("OOP");
+  await expect(page.locator("#setupOopRangeSummary")).toContainText("Standard 30%");
+  await expect(page.locator("#setupIpRangeSummary")).toContainText("Standard 30%");
+  await expect(page.locator("#setupRangeStatus")).toHaveText("Range変更後はSolveで再計算します。");
   await page.getByRole("button", { name: "詳細編集を開く" }).click();
   await expect(page.locator("#rangeEditor")).not.toHaveClass(/is-collapsed/);
   await expect(page.getByLabel("Range metrics")).toContainText("Weighted combos");
@@ -47,6 +51,9 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.locator("#comboCount")).toContainText("IP");
   await expect(page.locator("#rangeActiveHands")).not.toHaveText("0");
   await expect(page.locator("#rangeFeedback")).toHaveText("IP AA を 0% に変更");
+  await expect(page.locator("#setupIpRangeSummary")).toContainText("Standard 30%");
+  await expect(page.locator("#setupIpRangeSummary")).toContainText("combos");
+  await expect(page.locator("#setupRangeStatus")).toHaveText("IP AA を 0% に変更。Solveで再計算します。");
   await expect(page.locator("#riverStatus")).toHaveText("Solveで再計算");
 
   await page.getByLabel("Range frequency palette").getByRole("button", { name: "50%", exact: true }).click();
@@ -138,6 +145,8 @@ test("applies a spot preset and solves the selected street", async ({ page }) =>
   await expect(page.locator("#streetSummary")).toHaveText("Turn");
   await expect(page.locator("#setupStatus")).toHaveText("Turn計算可能");
   await expect(page.locator("#rangeFeedback")).toHaveText("BTN vs BB SRP Turn を適用");
+  await expect(page.locator("#setupOopRangeSummary")).toContainText("Standard 30%");
+  await expect(page.locator("#setupIpRangeSummary")).toContainText("Standard 30%");
   await expect(page.locator("#turnPanel")).toHaveClass(/is-active/);
 
   await page.getByRole("button", { name: "Solve Spot" }).click();
@@ -164,6 +173,9 @@ test("applies a preflop setup preset without implying a solved spot", async ({ p
   await expect(page.locator("#board-0")).toHaveValue("");
   await expect(page.locator("#streetSummary")).toHaveText("No board");
   await expect(page.locator("#rangeFeedback")).toHaveText("CO vs BTN 3bet Pot を適用");
+  await expect(page.locator("#setupOopRangeSummary")).toContainText("Standard 30%");
+  await expect(page.locator("#setupIpRangeSummary")).toContainText("Tight 18%");
+  await expect(page.locator("#setupRangeStatus")).toHaveText("CO vs BTN 3bet Pot を適用。Solveで再計算します。");
   await expect(page.locator("#preflopSpotStatus")).toContainText("setup preset");
   await expect(page.locator('#preflopSpotCards .spot-card[data-preflop-spot="co-btn-3bet-preflop"]')).toHaveClass(/active/);
   await expect(page.locator("#spotPreset")).toHaveValue("");
