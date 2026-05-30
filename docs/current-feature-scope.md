@@ -2,7 +2,7 @@
 
 ## 目的
 
-このドキュメントは、Phase 5完了時点のアプリ機能、UI構成、実装上の境界、現時点のUI課題を整理する。
+このドキュメントは、現在のアプリ機能、UI構成、実装上の境界、完了済みのUI改善、残っているUI課題を整理する。
 
 このアプリは、GTO Wizard風の学習体験に段階的に近づけるための静的Webアプリである。
 ただし、現時点では完全なGTOソルバーではなく、近似計算、River限定CFR風計算、Turn/FlopのLite表示、事前計算済みDB参照を組み合わせた学習用プロトタイプとして扱う。
@@ -17,6 +17,9 @@
    - Board 4枚: Turn Solver Lite
    - Board 5枚: River Mini Solver と Solved Spot Reference
 5. 近似EV、レンジ優位、アクション頻度、事前計算済みspot参照を確認する。
+6. Recent Solvesで直近のSolve結果を見返す。
+   - `Apply` で履歴のspot入力を再適用する。
+   - `Clear` でセッション内の履歴だけを消す。
 
 ## 現在の機能
 
@@ -78,6 +81,7 @@ Hero hand単体の近似判断であり、range vs rangeの厳密な均衡戦略
 - Exact / Approx の一致状態を表示する。
 - Approxの場合、stack、board、bet treeなど、どの条件を丸めたかを表示する。
 - record id、spot情報、solver名/version、DB stats、action rowsを表示する。
+- UI上ではRiver中心のReference DBであることを明示する。
 
 #### 実装の境界
 
@@ -95,6 +99,8 @@ Hero hand単体の近似判断であり、range vs rangeの厳密な均衡戦略
 - 各ハンドを 0% / 25% / 50% / 75% / 100% で設定できる。
 - OOP / IPそれぞれにプリセットを適用できる。
 - 編集したレンジは、Approx EV、River Mini Solver、Turn Solver Lite、Flop Solver Liteの入力に反映される。
+- Solver Setup付近にOOP/IPのrange summaryを表示する。
+- Range編集後はSolveで再計算が必要であることを表示する。
 
 #### 実装の境界
 
@@ -115,8 +121,9 @@ Hero hand単体の近似判断であり、range vs rangeの厳密な均衡戦略
   - All-in
 - Web Worker上でRiver計算を実行する。
 - 同じ入力ではsolver cacheを再利用する。
-- OOP bet / check、IP call vs bet、IP bet vs check、OOP call vs probe、OOP EVを表示する。
+- OOP bet / check、IP call vs bet、IP bet vs check、OOP call vs IP bet、OOP EVを表示する。
 - Bet sizeごとの比較表を表示する。
+- `Live CFR` source badgeと短い用語説明を表示する。
 
 #### 実装の境界
 
@@ -130,10 +137,11 @@ RiverだけがCFR風のaction treeを持つ。
 - Board 4枚のときに有効になる。
 - 未使用カードからRiver runoutを上限付きで列挙する。
 - 各River runoutについて、既存のRiver Mini Solverを呼び出す。
-- 平均OOP bet / check、平均IP call、平均IP bet vs check、平均OOP call vs probe、平均OOP EVを表示する。
+- 平均OOP bet / check、平均IP call、平均IP bet vs check、平均OOP call vs IP bet、平均OOP EVを表示する。
 - best sampled riverを表示する。
 - 計算時間、iteration数、runout cap、combo cap、accuracy labelを表示する。
 - Riverごとの結果行を表示する。
+- `Rollout Lite` source badgeと短い用語説明を表示する。
 
 #### 実装の境界
 
@@ -153,12 +161,32 @@ Turn Solver Liteは、Turn入力からRiver候補をサンプルし、River solv
 - Turn sampleごとのtexture、OOP/IP score、advantageを表示する。
 - Runout volatilityを表示する。
 - 軽量heuristic strategyとして、OOP c-bet、OOP check、IP continueを表示する。
+- `Heuristic Lite` source badgeと短い用語説明を表示する。
 
 #### 実装の境界
 
 Flop Solver LiteはCFRではない。
 Range advantage、board texture、turn sampleの変動から、学習用の簡易strategy mixを出す。
 本格的なFlop CFR、turn/river rolloutの厳密抽象化、solver精度検証は今後の別作業として扱う。
+
+### Results Navigation / Recent Solves
+
+#### できること
+
+- Resultsには `Overview / Flop / Turn / River / Reference DB` のタブがある。
+- Board枚数に応じて該当streetタブとsolverパネルを有効化する。
+- Solve後、該当streetの結果へ自動スクロールする。
+- モバイル幅ではアクティブなstreet結果パネルをCollapse / Expandできる。
+- Recent Solvesに直近5件のSolve結果をセッション内で保持する。
+- Recent Solvesの各行はstreet、hero、board、推奨アクション、equity、SPR、source labelを表示する。
+- `Apply` で履歴の入力snapshotを復元できる。
+- `Clear` で履歴だけを空にできる。
+
+#### 実装の境界
+
+- Recent Solvesはブラウザセッション内のメモリ保持のみで、LocalStorageや外部保存はしない。
+- `Apply` は入力値とrange presetを復元するが、Solve結果は再利用せず、該当streetを再計算待ちに戻す。
+- 実プレイ履歴のインポート、EV loss、study reportは未対応。
 
 ### Testing / CI
 
@@ -182,80 +210,92 @@ Range advantage、board texture、turn sampleの変動から、学習用の簡�
 
 ## UIの現状課題
 
-### 1. 入力と出力の対応が分かりにくい
+### 完了済みのUI改善
+
+- Board枚数に応じたstreet summaryと有効solverパネル表示。
+- Flop / Turn / River / Reference DBのResultsタブ。
+- Solve後の該当street結果への自動スクロール。
+- Solver source badgeと、Lite / DB / Live CFRの短い説明。
+- Range summaryと、Range変更後にSolveが必要であることの表示。
+- River中心のReference DBであることの明示。
+- OOP / IP / Probe / EV / SPR / Accuracy / Runout volatilityなどの短い用語説明。
+- モバイル幅でのstreet結果パネルCollapse / Expand。
+- Recent Solvesの表示、Apply、Clear。
+
+### 1. 入力と出力の対応は改善したが、入力欄はまだ集約されている
 
 Board入力は1つだが、Board枚数によってFlop / Turn / Riverの有効パネルが切り替わる。
-慣れれば効率的だが、初見では「なぜこのパネルが有効/無効なのか」が分かりにくい。
+street summaryや有効パネル表示で改善済みだが、初見ではBoard欄が全street共通であることを理解する必要がある。
 
 改善候補:
 
-- Board枚数に応じて現在のstreetを明示する。
-- Flop / Turn / Riverの各パネルに「このパネルが有効になる条件」を短く表示する。
-- 無効パネルを折りたたむ、または薄く表示する。
+- Street別の入力プリセットや、Flop / Turn / Riverごとの入力補助を追加する。
+- Board枚数不足時の入力ガイドをさらに具体化する。
 
-### 2. 出力パネルが増えて情報量が多い
+### 2. 出力パネルは整理したが、情報量はまだ多い
 
-現在はStrategy Output、Solved Spot Reference、Range Builder、River Mini Solver、Turn Solver Lite、Flop Solver Liteが縦に並ぶ。
-機能確認には便利だが、実際に学習するUIとしてはスクロール量が多い。
+Resultsタブ、source badge、モバイルCollapseで改善済み。
+ただし、Strategy Output、Reference DB、Range Builder、各street solverを同一ページに置いているため、学習用途ではまだ情報量が多い。
 
 改善候補:
 
-- Street別タブを導入する。
-- `Overview / Flop / Turn / River / Reference DB` のように表示を分ける。
-- Solve後に該当streetの結果へ自動スクロールする。
+- 学習モードと検証モードで表示密度を切り替える。
+- tableの表示列を用途別に絞る。
+- Range Builderを別ビューまたは固定サイドパネルに分ける。
 
-### 3. Lite実装とsolver実装の違いがUI上で混ざりやすい
+### 3. Lite実装とsolver実装の違いは明示したが、数値比較には注意が必要
 
 RiverはCFR風、TurnはRiver rollout、Flopはheuristic strategyであり、計算の性質が違う。
-Accuracy labelはあるが、ユーザーが数値を同列に比較してしまう可能性がある。
+source badge、scope note、Accuracy label、用語説明で改善済み。
+それでも、ユーザーがFlop / Turn / Riverの数値を同じ精度のsolver出力として比較する可能性は残る。
 
 改善候補:
 
-- 各パネルに `Live CFR`, `Rollout Lite`, `Heuristic Lite`, `Precomputed DB` のようなsource badgeをより強調する。
-- 各結果に「精度・用途」の短い説明を添える。
-- 本格solverではない出力には、Liteであることを常に表示する。
+- Lite出力の背景色や枠をさらに分ける。
+- Accuracyの説明をクリック/展開で詳しく表示する。
+- Flop / Turn / Riverの計算方式比較をヘルプとして追加する。
 
-### 4. Range Builderが下にあり、編集と結果確認が離れている
+### 4. Range Builderは重要だが、編集と結果確認はまだ離れている
 
 Range Builderは重要な入力だが、画面下部にある。
-レンジを変更したあとに上部の結果へ戻る必要があり、作業の往復が多い。
+summaryと再計算表示は追加済みだが、詳細編集と結果確認の往復はまだ多い。
 
 改善候補:
 
 - Range Builderをサイドパネル化する。
-- OOP/IP range summaryをSolver Setup付近に表示する。
-- Range編集後に再計算が必要なことを明示する。
+- Range Builderを別ビューに分ける。
+- Range変更差分をRecent SolvesやPractice Recommendationに残す。
 
-### 5. Precomputed DB ReferenceがRiver中心であることが分かりにくい
+### 5. Precomputed DB ReferenceはRiver中心として明示済み
 
-Reference DBは現状River spot中心だが、Flop/Turnパネルと同じ画面にあるため、全streetの参照DBのように見える可能性がある。
+Reference DBはRiver中心であることをUI上で明記済み。
+今後Flop/Turn precomputed dataを追加する場合は、street別のデータ境界を保つ必要がある。
 
 改善候補:
 
-- Reference DBに `River solved spot reference` と明記する。
-- Boardが3枚/4枚のときは、River referenceがまだ対象外であることを表示する。
 - 将来的にFlop/Turn precomputed dataを追加する場合はstreet別に分ける。
+- DB source、solver version、spot schemaをユーザーが比較しやすい形式にする。
 
-### 6. モバイルでは情報密度が高い
+### 6. モバイルは改善済みだが、Range Matrixはまだ重い
 
-レスポンシブ対応はあるが、Range Matrix、複数solverパネル、table表示が多く、スマホでの視認性はまだ重い。
+モバイル幅でのstreet結果Collapse / Expandは追加済み。
+ただし、13x13 Range Matrixとtable表示はまだスマホでは重い。
 
 改善候補:
 
-- モバイルではパネルをaccordion化する。
 - tableは重要列だけに絞る。
 - Range Matrixは拡大/縮小または別画面に分ける。
 
-### 7. 用語が英語中心で、日本語ユーザーには少し説明不足
+### 7. 用語説明は追加済みだが、ヘルプとしてはまだ軽い
 
 UIには `OOP`, `IP`, `Probe`, `Runout volatility`, `Accuracy` などの専門語が多い。
-学習ツールとしては自然だが、初心者には意味が分かりにくい。
+短い説明は追加済みだが、初心者向けの詳細なヘルプや例はまだない。
 
 改善候補:
 
-- tooltipまたは短い補助テキストを追加する。
-- 日本語UIラベルに寄せるか、英語ラベル + 日本語説明にする。
-- `Probe` などの用語は「IP bet vs check」のように行動ベースで統一する。
+- 詳細ヘルプや例を折りたたみで追加する。
+- 用語集ページを作る。
+- 日本語UIラベルと英語GTO用語の対応表を追加する。
 
 ## #8以降の整理ポイント
 

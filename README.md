@@ -20,6 +20,7 @@ python3 -m http.server 4173
 - Preflop Spot Browserで代表的なプリフロップspotの入力をprefill
 - River Mini Solver、Turn Solver Lite、Flop Solver Liteを表示
 - SQLiteの事前計算済みspotをブラウザで参照
+- Recent Solvesで直近のSolve結果を確認、再適用、クリア
 
 これは厳密なGTOソルバーではありません。CFRなどでゲーム木を解く代わりに、GTO学習用の近似ロジックとして実装しています。
 
