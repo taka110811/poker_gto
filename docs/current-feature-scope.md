@@ -160,6 +160,18 @@ Flop Solver LiteはCFRではない。
 Range advantage、board texture、turn sampleの変動から、学習用の簡易strategy mixを出す。
 本格的なFlop CFR、turn/river rolloutの厳密抽象化、solver精度検証は今後の別作業として扱う。
 
+### Solver Method Help
+
+#### できること
+
+- River / Turn / Flopの各solverパネルに、計算方式とaccuracyの短い折りたたみ説明を表示する。
+- RiverはLive CFR風、TurnはRiver rollout平均、FlopはheuristicであることをUI上で確認できる。
+
+#### 実装の境界
+
+- 説明は静的なUIヘルプであり、solver設定や計算ロジックは変更しない。
+- 詳細な数式、CFR収束性、精度検証レポートはまだ含まない。
+
 ### Testing / CI
 
 #### できること
@@ -207,12 +219,12 @@ Board入力は1つだが、Board枚数によってFlop / Turn / Riverの有効�
 ### 3. Lite実装とsolver実装の違いがUI上で混ざりやすい
 
 RiverはCFR風、TurnはRiver rollout、Flopはheuristic strategyであり、計算の性質が違う。
-Accuracy labelはあるが、ユーザーが数値を同列に比較してしまう可能性がある。
+Accuracy labelと折りたたみ説明はあるが、ユーザーが数値を同列に比較してしまう可能性はまだ残る。
 
 改善候補:
 
 - 各パネルに `Live CFR`, `Rollout Lite`, `Heuristic Lite`, `Precomputed DB` のようなsource badgeをより強調する。
-- 各結果に「精度・用途」の短い説明を添える。
+- 詳細な数式や精度検証レポートを追加する。
 - 本格solverではない出力には、Liteであることを常に表示する。
 
 ### 4. Range Builderが下にあり、編集と結果確認が離れている
