@@ -645,6 +645,55 @@ button {
   line-height: 1.5;
 }
 
+.solve-history {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.solve-history p {
+  line-height: 1.4;
+}
+
+.solve-history-list {
+  display: grid;
+  gap: 8px;
+}
+
+.solve-history-item {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #12181c;
+}
+
+.solve-history-item div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.solve-history-item span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.solve-history-item strong {
+  font-size: 15px;
+}
+
+.solve-history-item small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .precomputed-box {
   display: grid;
   gap: 10px;

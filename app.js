@@ -31,6 +31,7 @@ const rangeState = {
 const betTreeState = {
   activeSizes: new Set(["0.33", "0.75"]),
 };
+const solveHistory = [];
 const solverSettings = {
   iterations: new URLSearchParams(window.location.search).get("testMode") === "1" ? 6 : 30,
   comboLimit: 40,
@@ -129,6 +130,9 @@ const els = {
   raisePct: document.querySelector("#raisePct"),
   callPct: document.querySelector("#callPct"),
   foldPct: document.querySelector("#foldPct"),
+  solveHistoryCount: document.querySelector("#solveHistoryCount"),
+  solveHistoryEmpty: document.querySelector("#solveHistoryEmpty"),
+  solveHistoryList: document.querySelector("#solveHistoryList"),
   riverStatus: document.querySelector("#riverStatus"),
   oopBetFreq: document.querySelector("#oopBetFreq"),
   oopCheckFreq: document.querySelector("#oopCheckFreq"),
@@ -732,6 +736,7 @@ function renderDecision(equityValue, decision, sampleCount) {
   els.spr.textContent = decision.spr.toFixed(1);
   els.samples.textContent = sampleCount.toLocaleString();
   renderPracticeRecommendation(entries[0], equityValue, decision);
+  addSolveHistory(entries[0], equityValue, decision);
   setBars(decision);
   setReason(
     `エクイティ ${pct(equityValue)}、必要勝率 ${pct(decision.potOdds)}。` +
@@ -756,6 +761,44 @@ function renderPracticeRecommendation(bestAction, equityValue, decision) {
   els.practiceSpr.textContent = decision.spr.toFixed(1);
   els.practiceSource.textContent = strategySourceLabel(boardCount);
   els.practiceNote.textContent = "完全GTOではなく学習用の近似です。";
+}
+
+function addSolveHistory(bestAction, equityValue, decision) {
+  const { hero, board } = selectedCards();
+  const knownBoard = board.filter(Boolean);
+  solveHistory.unshift({
+    action: `${bestAction[0]} ${pct(bestAction[1])}`,
+    board: knownBoard.map(formatCard).join(" ") || "No board",
+    equity: pct(equityValue),
+    hero: hero.filter(Boolean).map(formatCard).join(" "),
+    source: strategySourceLabel(knownBoard.length),
+    spr: decision.spr.toFixed(1),
+    street: streetLabel(knownBoard.length),
+  });
+  solveHistory.splice(5);
+  renderSolveHistory();
+}
+
+function renderSolveHistory() {
+  els.solveHistoryCount.textContent = `${solveHistory.length} ${solveHistory.length === 1 ? "spot" : "spots"}`;
+  els.solveHistoryEmpty.hidden = solveHistory.length > 0;
+  els.solveHistoryList.innerHTML = "";
+  solveHistory.forEach((entry) => {
+    const item = document.createElement("div");
+    const head = document.createElement("div");
+    const street = document.createElement("span");
+    const action = document.createElement("strong");
+    const spot = document.createElement("small");
+    const source = document.createElement("small");
+    item.className = "solve-history-item";
+    street.textContent = entry.street;
+    action.textContent = entry.action;
+    spot.textContent = `${entry.hero} / ${entry.board} / ${entry.equity} equity / SPR ${entry.spr}`;
+    source.textContent = entry.source;
+    head.append(street, action);
+    item.append(head, spot, source);
+    els.solveHistoryList.appendChild(item);
+  });
 }
 
 function setBars(decision) {
