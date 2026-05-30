@@ -814,6 +814,21 @@ button {
   font-size: 13px;
 }
 
+.street-panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.street-toggle {
+  display: none;
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .range-overview {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 2fr);
@@ -1310,6 +1325,30 @@ button {
 
   .river-grid {
     grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  }
+
+  .street-panel-actions {
+    align-items: stretch;
+    justify-content: space-between;
+  }
+
+  .street-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .street-panel.is-inactive .street-toggle {
+    display: none;
+  }
+
+  .street-panel.is-collapsed .matrix-head p,
+  .street-panel.is-collapsed .source-note,
+  .street-panel.is-collapsed .terms-row,
+  .street-panel.is-collapsed .bet-tree,
+  .street-panel.is-collapsed .river-grid,
+  .street-panel.is-collapsed .size-table-wrap {
+    display: none;
   }
 
   .size-buttons {

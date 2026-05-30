@@ -404,6 +404,16 @@ test("keeps the solver workspace usable on mobile width", async ({ page }) => {
   await expect(page.locator('[data-results-tab="flop"]')).toHaveClass(/active/);
   await expect(page.locator("#turnPanel")).toHaveClass(/is-inactive/);
   await expect(page.locator('.view-nav a[href="#flopPanel"]')).toHaveClass(/active/);
+  const flopToggle = page.locator('#flopPanel [data-street-toggle="flop"]');
+  await expect(flopToggle).toBeVisible();
+  await expect(flopToggle).toHaveText("Collapse");
+  await expect(flopToggle).toHaveAttribute("aria-expanded", "true");
+  await flopToggle.click();
+  await expect(flopToggle).toHaveText("Expand");
+  await expect(flopToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#flopPanel .river-grid")).toBeHidden();
+  await flopToggle.click();
+  await expect(page.locator("#flopPanel .river-grid")).toBeVisible();
 
   expect(pageErrors).toEqual([]);
 });
@@ -421,9 +431,15 @@ test("moves mobile users to the relevant solver after solve", async ({ page }) =
   await page.locator("#board-2").selectOption("4c");
   await page.locator("#board-3").selectOption("2h");
   await expect(page.locator("#setupStatus")).toHaveText("Turn計算可能");
+  const turnToggle = page.locator('#turnPanel [data-street-toggle="turn"]');
+  await expect(turnToggle).toBeVisible();
+  await turnToggle.click();
+  await expect(page.locator("#turnPanel .river-grid")).toBeHidden();
 
   await page.getByRole("button", { name: "Solve Spot" }).click();
   await expect(page.locator("#turnStatus")).toContainText("runouts", { timeout: 10000 });
+  await expect(page.locator("#turnPanel .river-grid")).toBeVisible();
+  await expect(turnToggle).toHaveAttribute("aria-expanded", "true");
   await page.waitForFunction(() => Math.abs(document.querySelector("#turnPanel").getBoundingClientRect().top) < 140);
 
   const scrollPosition = await page.evaluate(() => ({

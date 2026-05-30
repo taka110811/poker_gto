@@ -483,7 +483,12 @@
               <span><strong>OOP call vs IP bet</strong> probeへのcall頻度</span>
             </div>
           </div>
-          <span id="riverStatus">Waiting for river</span>
+          <div class="street-panel-actions">
+            <span id="riverStatus">Waiting for river</span>
+            <button class="secondary street-toggle" type="button" data-street-toggle="river" aria-controls="riverPanel">
+              Collapse
+            </button>
+          </div>
         </div>
 
         <div class="bet-tree">
@@ -569,7 +574,12 @@
               <span><strong>Accuracy</strong> runout数とcombo capの近似条件</span>
             </div>
           </div>
-          <span id="turnStatus">Waiting for turn</span>
+          <div class="street-panel-actions">
+            <span id="turnStatus">Waiting for turn</span>
+            <button class="secondary street-toggle" type="button" data-street-toggle="turn" aria-controls="turnPanel">
+              Collapse
+            </button>
+          </div>
         </div>
 
         <div class="river-grid">
@@ -669,7 +679,12 @@
               <span><strong>Runout volatility</strong> turn候補でadvantageが動く幅</span>
             </div>
           </div>
-          <span id="flopStatus">Waiting for flop</span>
+          <div class="street-panel-actions">
+            <span id="flopStatus">Waiting for flop</span>
+            <button class="secondary street-toggle" type="button" data-street-toggle="flop" aria-controls="flopPanel">
+              Collapse
+            </button>
+          </div>
         </div>
 
         <div class="river-grid">
