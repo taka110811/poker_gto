@@ -336,7 +336,10 @@
           <div class="solve-history" aria-label="Recent solves">
             <div class="section-heading">
               <div class="section-title">Recent Solves</div>
-              <span id="solveHistoryCount" class="source-badge">0 spots</span>
+              <div class="solve-history-actions">
+                <span id="solveHistoryCount" class="source-badge">0 spots</span>
+                <button id="clearSolveHistory" class="secondary solve-history-clear" type="button" disabled>Clear</button>
+              </div>
             </div>
             <p id="solveHistoryEmpty">Solve Spotを押すと直近の結果がここに残ります。</p>
             <div id="solveHistoryList" class="solve-history-list"></div>

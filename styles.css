@@ -662,6 +662,12 @@ button {
   gap: 8px;
 }
 
+.solve-history-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .solve-history-item {
   display: grid;
   gap: 6px;
@@ -699,6 +705,12 @@ button {
   padding: 0 10px;
   font-size: 12px;
   justify-self: start;
+}
+
+.solve-history-clear {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
 }
 
 .precomputed-box {
