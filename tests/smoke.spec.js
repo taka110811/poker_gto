@@ -20,8 +20,14 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.getByText("Chip EV")).toBeVisible();
   await expect(page.locator(".source-badge", { hasText: "Approx EV" })).toBeVisible();
   await expect(page.locator(".source-badge", { hasText: "Live CFR" })).toBeVisible();
-  await expect(page.locator(".source-badge", { hasText: "Precomputed DB" })).toBeVisible();
-  await expect(page.getByText("Solved Spot Reference")).toBeVisible();
+  await expect(page.locator(".source-badge", { hasText: "Rollout Lite" })).toBeVisible();
+  await expect(page.locator(".source-badge", { hasText: "Heuristic Lite" })).toBeVisible();
+  await expect(page.locator(".source-badge", { hasText: "River Reference DB" })).toBeVisible();
+  await expect(page.getByText("River Solved Spot Reference")).toBeVisible();
+  await expect(page.getByLabel("River solver scope")).toContainText("Board 5枚で有効");
+  await expect(page.getByLabel("Turn solver scope")).toContainText("Board 4枚で有効");
+  await expect(page.getByLabel("Flop solver scope")).toContainText("Board 3枚で有効");
+  await expect(page.getByLabel("Reference DB scope")).toContainText("River中心");
   await expect(page.getByText("Preflop Spot Browser")).toBeVisible();
   await expect(page.locator("#preflopSpotCount")).toHaveText("3 setups");
   await expect(page.getByRole("button", { name: "OOP Range" })).toBeVisible();
@@ -242,6 +248,7 @@ test("solves a turn spot by rolling out capped river cards", async ({ page }) =>
   await page.getByRole("button", { name: "Solve Spot" }).click();
 
   await expect(page.locator("#turnStatus")).toContainText("runouts", { timeout: 10000 });
+  await expect(page.getByLabel("Turn solver scope")).toContainText("River rollout average / Lite");
   await expect(page.locator("#turnRunouts")).toHaveText("4");
   await expect(page.locator("#turnStatus")).toContainText("6 iterations");
   await expect(page.locator("#turnStatus")).toContainText("16 combo cap");
@@ -279,6 +286,7 @@ test("shows flop solver lite texture and turn samples", async ({ page }) => {
   await page.getByRole("button", { name: "Solve Spot" }).click();
 
   await expect(page.locator("#flopStatus")).toContainText("4 turn samples");
+  await expect(page.getByLabel("Flop solver scope")).toContainText("Texture + range heuristic / Lite");
   await expect(page.locator("#flopTexture")).toContainText("A-high");
   await expect(page.locator("#flopOopScore")).not.toHaveText("--");
   await expect(page.locator("#flopIpScore")).not.toHaveText("--");
