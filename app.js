@@ -86,6 +86,7 @@ const els = {
   setupOopRangeSummary: document.querySelector("#setupOopRangeSummary"),
   setupIpRangeSummary: document.querySelector("#setupIpRangeSummary"),
   setupRangeStatus: document.querySelector("#setupRangeStatus"),
+  resultsTabs: document.querySelectorAll("[data-results-tab]"),
   rangeMatrix: document.querySelector("#rangeMatrix"),
   comboCount: document.querySelector("#comboCount"),
   rangeEditor: document.querySelector("#rangeEditor"),
@@ -255,6 +256,14 @@ function updateStreetPanels(boardCount) {
       (activeStreet === "turn" && target === "#turnPanel") ||
       (activeStreet === "river" && target === "#riverPanel");
     link.classList.toggle("active", active);
+  });
+  updateResultsTabs(activeStreet);
+}
+
+function updateResultsTabs(activeStreet) {
+  const activeTab = activeStreet || "overview";
+  els.resultsTabs.forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.resultsTab === activeTab);
   });
 }
 

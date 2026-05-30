@@ -250,6 +250,14 @@
         </section>
 
         <aside id="resultsPanel" class="panel results" aria-label="Results">
+          <nav class="results-tabs" aria-label="Results sections">
+            <a class="active" href="#resultsPanel" data-results-tab="overview">Overview</a>
+            <a href="#flopPanel" data-results-tab="flop">Flop</a>
+            <a href="#turnPanel" data-results-tab="turn">Turn</a>
+            <a href="#riverPanel" data-results-tab="river">River</a>
+            <a href="#precomputedReference" data-results-tab="reference">Reference DB</a>
+          </nav>
+
           <div class="practice-result" aria-label="Practice recommendation">
             <div class="section-heading">
               <div class="section-title">Practice Recommendation</div>
@@ -325,7 +333,7 @@
             入力を選んで Solve Spot を押してください。
           </p>
 
-          <div class="precomputed-box" aria-label="Precomputed strategy reference">
+          <div id="precomputedReference" class="precomputed-box" aria-label="Precomputed strategy reference">
             <div class="section-heading">
               <div class="section-title">River Solved Spot Reference</div>
               <span class="source-badge db">River Reference DB</span>
