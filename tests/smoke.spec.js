@@ -30,6 +30,9 @@ test("loads solver workspace and solves a deterministic approximate spot", async
   await expect(page.getByLabel("Turn solver scope")).toContainText("Board 4枚で有効");
   await expect(page.getByLabel("Flop solver scope")).toContainText("Board 3枚で有効");
   await expect(page.getByLabel("Reference DB scope")).toContainText("River中心");
+  await expect(page.getByLabel("Overview solver terms")).toContainText("SPR");
+  await expect(page.getByLabel("Range builder terms")).toContainText("out of position");
+  await expect(page.getByLabel("River solver terms")).toContainText("Probe");
   await expect(page.getByText("Preflop Spot Browser")).toBeVisible();
   await expect(page.locator("#preflopSpotCount")).toHaveText("3 setups");
   await expect(page.getByRole("button", { name: "OOP Range" })).toBeVisible();
@@ -267,6 +270,7 @@ test("solves a turn spot by rolling out capped river cards", async ({ page }) =>
 
   await expect(page.locator("#turnStatus")).toContainText("runouts", { timeout: 10000 });
   await expect(page.getByLabel("Turn solver scope")).toContainText("River rollout average / Lite");
+  await expect(page.getByLabel("Turn solver terms")).toContainText("Volatility");
   await expect(page.locator("#turnRunouts")).toHaveText("4");
   await expect(page.locator("#turnStatus")).toContainText("6 iterations");
   await expect(page.locator("#turnStatus")).toContainText("16 combo cap");
@@ -305,6 +309,7 @@ test("shows flop solver lite texture and turn samples", async ({ page }) => {
 
   await expect(page.locator("#flopStatus")).toContainText("4 turn samples");
   await expect(page.getByLabel("Flop solver scope")).toContainText("Texture + range heuristic / Lite");
+  await expect(page.getByLabel("Flop solver terms")).toContainText("Range advantage");
   await expect(page.locator("#flopTexture")).toContainText("A-high");
   await expect(page.locator("#flopOopScore")).not.toHaveText("--");
   await expect(page.locator("#flopIpScore")).not.toHaveText("--");

@@ -342,6 +342,10 @@
               <span>Board 5枚で参照</span>
               <strong>River中心の小規模precomputed sample</strong>
             </div>
+            <div class="terms-row" aria-label="Overview solver terms">
+              <span><strong>EV</strong> expected chip value</span>
+              <span><strong>SPR</strong> stack-to-pot ratio</span>
+            </div>
             <p id="precomputedStatus">Loading reference DB</p>
             <dl>
               <div>
@@ -412,6 +416,10 @@
             <strong id="rangeAverageFreq">0%</strong>
           </div>
         </div>
+        <div class="terms-row" aria-label="Range builder terms">
+          <span><strong>OOP</strong> out of position / postflopで先に行動</span>
+          <span><strong>IP</strong> in position / postflopで後に行動</span>
+        </div>
         <div class="range-tabs" role="group" aria-label="Range side">
           <button id="oopRangeTab" class="range-tab active" type="button">OOP Range</button>
           <button id="ipRangeTab" class="range-tab" type="button">IP Range</button>
@@ -470,6 +478,10 @@
               <span>Board 5枚で有効</span>
               <strong>Live CFR風 / River only</strong>
             </div>
+            <div class="terms-row" aria-label="River solver terms">
+              <span><strong>Probe</strong> OOP check後のIP bet</span>
+              <span><strong>OOP call vs IP bet</strong> probeへのcall頻度</span>
+            </div>
           </div>
           <span id="riverStatus">Waiting for river</span>
         </div>
@@ -516,7 +528,7 @@
             <strong id="ipProbeFreq">--</strong>
           </div>
           <div class="river-metric">
-            <span>OOP call vs probe</span>
+            <span>OOP call vs IP bet</span>
             <strong id="oopCallFreq">--</strong>
           </div>
           <div class="river-metric">
@@ -552,6 +564,10 @@
               <span>Board 4枚で有効</span>
               <strong>River rollout average / Lite</strong>
             </div>
+            <div class="terms-row" aria-label="Turn solver terms">
+              <span><strong>Volatility</strong> river候補でEVや頻度が動く幅</span>
+              <span><strong>Accuracy</strong> runout数とcombo capの近似条件</span>
+            </div>
           </div>
           <span id="turnStatus">Waiting for turn</span>
         </div>
@@ -578,7 +594,7 @@
             <strong id="turnIpProbeFreq">--</strong>
           </div>
           <div class="river-metric">
-            <span>Avg OOP call vs probe</span>
+            <span>Avg OOP call vs IP bet</span>
             <strong id="turnOopCallFreq">--</strong>
           </div>
           <div class="river-metric">
@@ -647,6 +663,10 @@
             <div class="source-note" aria-label="Flop solver scope">
               <span>Board 3枚で有効</span>
               <strong>Texture + range heuristic / Lite</strong>
+            </div>
+            <div class="terms-row" aria-label="Flop solver terms">
+              <span><strong>Range advantage</strong> OOP/IP range scoreの差</span>
+              <span><strong>Runout volatility</strong> turn候補でadvantageが動く幅</span>
             </div>
           </div>
           <span id="flopStatus">Waiting for flop</span>

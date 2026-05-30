@@ -688,6 +688,31 @@ button {
   font-weight: 700;
 }
 
+.terms-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.terms-row span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid rgba(90, 169, 230, 0.35);
+  border-radius: 6px;
+  background: rgba(90, 169, 230, 0.08);
+}
+
+.terms-row strong {
+  margin-right: 4px;
+  color: var(--text);
+}
+
 .precomputed-box dl {
   display: grid;
   gap: 10px;
