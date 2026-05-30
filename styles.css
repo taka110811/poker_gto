@@ -694,6 +694,13 @@ button {
   line-height: 1.35;
 }
 
+.solve-history-apply {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  justify-self: start;
+}
+
 .precomputed-box {
   display: grid;
   gap: 10px;
