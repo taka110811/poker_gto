@@ -191,6 +191,12 @@ p {
   background: rgba(43, 191, 132, 0.12);
 }
 
+.source-badge.lite {
+  border-color: rgba(177, 143, 255, 0.45);
+  color: #dfd3ff;
+  background: rgba(177, 143, 255, 0.12);
+}
+
 .source-badge.db {
   border-color: rgba(240, 184, 76, 0.5);
   color: #f9e5b8;
@@ -575,6 +581,37 @@ button {
   line-height: 1.4;
 }
 
+.source-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -4px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.source-note span,
+.source-note strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #12181c;
+}
+
+.source-note span {
+  color: #c7f2df;
+  font-weight: 800;
+}
+
+.source-note strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .precomputed-box dl {
   display: grid;
   gap: 10px;
@@ -584,6 +621,10 @@ button {
 .precomputed-box div {
   display: grid;
   gap: 4px;
+}
+
+.precomputed-box .source-note {
+  display: flex;
 }
 
 .precomputed-box dt {

@@ -309,8 +309,12 @@
 
           <div class="precomputed-box" aria-label="Precomputed strategy reference">
             <div class="section-heading">
-              <div class="section-title">Solved Spot Reference</div>
-              <span class="source-badge db">Precomputed DB</span>
+              <div class="section-title">River Solved Spot Reference</div>
+              <span class="source-badge db">River Reference DB</span>
+            </div>
+            <div class="source-note" aria-label="Reference DB scope">
+              <span>Board 5枚で参照</span>
+              <strong>River中心の小規模precomputed sample</strong>
             </div>
             <p id="precomputedStatus">Loading reference DB</p>
             <dl>
@@ -436,6 +440,10 @@
               <span class="source-badge live">Live CFR</span>
             </div>
             <p>Board 5枚、固定レンジ、Raiseなし、fixed bet sizesでレンジ戦略を近似します。</p>
+            <div class="source-note" aria-label="River solver scope">
+              <span>Board 5枚で有効</span>
+              <strong>Live CFR風 / River only</strong>
+            </div>
           </div>
           <span id="riverStatus">Waiting for river</span>
         </div>
@@ -511,9 +519,13 @@
           <div>
             <div class="section-heading">
               <div class="section-title">Turn Solver Lite</div>
-              <span class="source-badge live">River Rollout</span>
+              <span class="source-badge lite">Rollout Lite</span>
             </div>
             <p>Board 4枚から小さいRiver runoutを列挙し、既存River solverで平均戦略を近似します。</p>
+            <div class="source-note" aria-label="Turn solver scope">
+              <span>Board 4枚で有効</span>
+              <strong>River rollout average / Lite</strong>
+            </div>
           </div>
           <span id="turnStatus">Waiting for turn</span>
         </div>
@@ -603,9 +615,13 @@
           <div>
             <div class="section-heading">
               <div class="section-title">Flop Solver Lite</div>
-              <span class="source-badge live">Texture Scan</span>
+              <span class="source-badge lite">Heuristic Lite</span>
             </div>
             <p>Board 3枚からtextureとrange advantageを確認し、小さいTurn候補を列挙します。</p>
+            <div class="source-note" aria-label="Flop solver scope">
+              <span>Board 3枚で有効</span>
+              <strong>Texture + range heuristic / Lite</strong>
+            </div>
           </div>
           <span id="flopStatus">Waiting for flop</span>
         </div>
